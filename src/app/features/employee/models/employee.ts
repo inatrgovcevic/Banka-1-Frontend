@@ -1,14 +1,14 @@
 export interface Employee {
-  id: number;
-  firstName: string;
-  lastName: string;
+  id?: number;
+  ime: string;
+  prezime: string;
+  datumRodjenja: string; // Format: "YYYY-MM-DD"
+  pol: string;           // "M" ili "Z"
   email: string;
-  phoneNumber: string;
-  position: string;
-  jmbg: string;
-  address: string;
-  birthDate: string;
-  status: boolean;
-  role: 'Admin' | 'Regular'; 
-  permissions: string[];     
+  brojTelefona: string;
+  adresa?: string;
+  pozicija?: string;
+  departman?: string;
+  aktivan?: boolean;
+  permisije?: string[];
 }

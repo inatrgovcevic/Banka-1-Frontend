@@ -1,62 +1,74 @@
-import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { Component, EventEmitter, Input, Output, OnChanges, SimpleChanges } from '@angular/core';
+import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Employee } from '../../models/employee';
-
 @Component({
   selector: 'app-employee-edit-modal',
   templateUrl: './employee-edit.component.html',
   styleUrls: ['./employee-edit.component.css']
 })
-export class EmployeeEditComponent {
-  /** Emituje sačuvanog zaposlenog nazad roditeljskoj komponenti */
+export class EmployeeEditComponent implements OnChanges {
+  @Input() employee!: Employee;
   @Output() save = new EventEmitter<Employee>();
-  
-  /** Emituje događaj za zatvaranje modala bez čuvanja */
   @Output() cancel = new EventEmitter<void>();
 
-  editingEmployee!: Employee;
-  editFullName: string = '';
+  editForm!: FormGroup;
 
-  /**
-   * Postavlja podatke zaposlenog i kreira duboku kopiju kako bi se izbegla mutacija
-   * pre nego što korisnik potvrdi izmene.
-   * @param val Zaposleni koji se menja
-   */
-  @Input() set employee(val: Employee) {
-    if (val) {
-      this.editingEmployee = { ...val };
-      this.editingEmployee.permissions = [...val.permissions];
-      this.editFullName = `${this.editingEmployee.firstName} ${this.editingEmployee.lastName}`.trim();
+  constructor(private fb: FormBuilder) {
+    // Inicijalizujemo formu sa pravilima (validacijama)
+    this.editForm = this.fb.group({
+      ime: ['', [Validators.required, Validators.minLength(2)]],
+      prezime: ['', [Validators.required, Validators.minLength(2)]],
+      email: ['', [Validators.required, Validators.email]],
+      pozicija: ['Regular employee'],
+      aktivan: [true],
+      permisije: [[]] // Čuvamo niz dozvola
+    });
+  }
+
+  // Ovo se poziva čim klikneš na "Edit" u tabeli da popuni formu starim podacima
+  ngOnChanges(changes: SimpleChanges): void {
+    if (changes['employee'] && this.employee) {
+      this.editForm.patchValue({
+        ime: this.employee.ime || '',
+        prezime: this.employee.prezime || '',
+        email: this.employee.email || '',
+        pozicija: this.employee.pozicija || 'Regular employee',
+        aktivan: this.employee.aktivan !== false,
+        permisije: this.employee.permisije ? [...this.employee.permisije] : []
+      });
     }
   }
 
-  /**
-   * Dodaje ili uklanja dozvolu iz niza prilikom klikanja na checkbox.
-   * @param permission Naziv dozvole
-   * @param event DOM događaj
-   */
+  // Upravljanje checkbox-ovima
   togglePermission(permission: string, event: Event): void {
-    const target = event.target as HTMLInputElement;
-    if (target.checked) {
-      this.editingEmployee.permissions.push(permission);
-    } else {
-      this.editingEmployee.permissions = this.editingEmployee.permissions.filter(p => p !== permission);
-    }
-  }
-
-  /**
-   * Priprema podatke i emituje ih roditeljskoj komponenti na čuvanje.
-   */
-  onSave(): void {
-    const nameParts = this.editFullName.trim().split(' ');
-    this.editingEmployee.firstName = nameParts[0] || '';
-    this.editingEmployee.lastName = nameParts.slice(1).join(' ') || '';
+    const isChecked = (event.target as HTMLInputElement).checked;
+    let currentPermissions = this.editForm.get('permisije')?.value as string[];
     
-    this.save.emit(this.editingEmployee);
+    if (isChecked) {
+      currentPermissions.push(permission);
+    } else {
+      currentPermissions = currentPermissions.filter((p: string) => p !== permission);
+    }
+    
+    this.editForm.patchValue({ permisije: currentPermissions });
   }
 
-  /**
-   * Otkazuje izmenu i zatvara modal.
-   */
+  onSave(): void {
+    // Ako polja nisu dobro popunjena, prekida čuvanje i boji ih u crveno
+    if (this.editForm.invalid) {
+      this.editForm.markAllAsTouched();
+      return;
+    }
+
+    // Spajamo stari ID i ostala polja sa novim vrednostima iz forme
+    const updatedEmployee: Employee = {
+      ...this.employee, 
+      ...this.editForm.value
+    };
+
+    this.save.emit(updatedEmployee);
+  }
+
   onCancel(): void {
     this.cancel.emit();
   }
