@@ -122,5 +122,5 @@ import { Router } from '@angular/router';
 })
 export class NotFoundComponent {
   constructor(private router: Router) {}
-  goHome(): void { this.router.navigate(['/']); }
+  goHome(): void { this.router.navigate(['/home']); }
 }

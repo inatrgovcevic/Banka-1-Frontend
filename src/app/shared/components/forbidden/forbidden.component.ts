@@ -117,5 +117,5 @@ import { Router } from '@angular/router';
 })
 export class ForbiddenComponent {
   constructor(private router: Router) {}
-  goHome(): void { this.router.navigate(['/']); }
+  goHome(): void { this.router.navigate(['/home']); }
 }
