@@ -7,13 +7,15 @@ import { EmployeeListComponent } from './components/employee-list/employee-list.
 import { EmployeeCreateComponent } from './components/employee-create/employee-create.component';
 import { EmployeeEditComponent } from './components/employee-edit/employee-edit.component';
 import { AccountCreateComponent } from './components/account-create/account-create.component';
+import { ClientListComponent } from './components/client-list/client-list.component';
 
 @NgModule({
   declarations: [
     EmployeeListComponent,
     EmployeeCreateComponent,
     EmployeeEditComponent,
-    AccountCreateComponent
+    AccountCreateComponent,
+    ClientListComponent
   ],
   imports: [
     CommonModule,

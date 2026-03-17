@@ -1,29 +1,104 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { map } from 'rxjs/operators';
 import { environment } from '../../../../environments/environment';
 
 export interface ClientDto {
-  id: string;
+  id: string | number;
   firstName?: string;
   lastName?: string;
   name?: string;
   email?: string;
+  phoneNumber?: string;
+  ime?: string;
+  prezime?: string;
+  brojTelefona?: string;
+}
+
+export interface ClientFilters {
+  firstName?: string;
+  lastName?: string;
+  email?: string;
+}
+
+export interface ClientPageResponse {
+  content: ClientDto[];
+  totalElements: number;
+  totalPages: number;
+  number: number;
+  size: number;
 }
 
 @Injectable({ providedIn: 'root' })
 export class ClientService {
-  private base = `${environment.apiUrl}/clients`;
+  private readonly base = `${environment.apiUrl}/customers`;
 
   constructor(private http: HttpClient) {}
 
   getAllClients(): Observable<ClientDto[]> {
-    return this.http.get<ClientDto[]>(this.base);
+    const page = 0;
+    const size = 1000;
+    const params = new HttpParams()
+      .set('page', page.toString())
+      .set('size', size.toString());
+
+    return this.http
+      .get<ClientPageResponse | ClientDto[]>(this.base, { params })
+      .pipe(map((response) => this.normalizePageResponse(response, page, size).content));
   }
 
-  searchClients(query: string, page = 0, size = 50): Observable<{ content: ClientDto[]; total?: number }> {
-    let params = new HttpParams().set('page', page.toString()).set('size', size.toString());
-    if (query) params = params.set('q', query);
-    return this.http.get<{ content: ClientDto[]; total?: number }>(`${this.base}/search`, { params });
+  getClients(filters: ClientFilters = {}, page = 0, size = 10): Observable<ClientPageResponse> {
+    let params = new HttpParams()
+      .set('page', page.toString())
+      .set('size', size.toString());
+
+    if (filters.firstName?.trim()) {
+      params = params.set('ime', filters.firstName.trim());
+    }
+
+    if (filters.lastName?.trim()) {
+      params = params.set('prezime', filters.lastName.trim());
+    }
+
+    if (filters.email?.trim()) {
+      params = params.set('email', filters.email.trim());
+    }
+
+    return this.http
+      .get<ClientPageResponse | ClientDto[]>(this.base, { params })
+      .pipe(map((response) => this.normalizePageResponse(response, page, size)));
+  }
+
+  searchClients(query: string, page = 0, size = 10): Observable<ClientPageResponse> {
+    const params = new HttpParams()
+      .set('query', query.trim())
+      .set('page', page.toString())
+      .set('size', size.toString());
+
+    return this.http
+      .get<ClientPageResponse | ClientDto[]>(`${this.base}/search`, { params })
+      .pipe(map((response) => this.normalizePageResponse(response, page, size)));
+  }
+
+  private normalizePageResponse(
+    response: ClientPageResponse | ClientDto[],
+    page: number,
+    size: number
+  ): ClientPageResponse {
+    const content = Array.isArray(response) ? response : response.content ?? [];
+    const totalElements = Array.isArray(response) ? content.length : response.totalElements ?? content.length;
+    const resolvedSize = Array.isArray(response) ? size : response.size ?? size;
+    const totalPages = Array.isArray(response)
+      ? (totalElements === 0 ? 0 : Math.ceil(totalElements / resolvedSize))
+      : response.totalPages ?? (totalElements === 0 ? 0 : Math.ceil(totalElements / resolvedSize));
+
+    return {
+      content,
+      totalElements,
+      totalPages,
+      number: Array.isArray(response) ? page : response.number ?? page,
+      size: resolvedSize
+    };
   }
 }
