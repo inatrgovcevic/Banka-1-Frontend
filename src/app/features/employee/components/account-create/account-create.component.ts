@@ -426,7 +426,7 @@ export class AccountCreateComponent implements OnInit, OnDestroy {
       .subscribe({
         next: (items: ClientDto[]) => {
           this.clients = items.map((c) => ({
-            id: c.id,
+            id: String(c.id),
             name: c.name ?? `${c.firstName ?? ''} ${c.lastName ?? ''}`.trim()
           }));
         },

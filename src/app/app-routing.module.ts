@@ -4,6 +4,7 @@ import { RouterModule, Routes } from '@angular/router';
 import { EmployeeListComponent } from './features/employee/components/employee-list/employee-list.component';
 import { EmployeeCreateComponent } from './features/employee/components/employee-create/employee-create.component';
 import { AccountCreateComponent } from './features/employee/components/account-create/account-create.component';
+import { ClientListComponent } from './features/employee/components/client-list/client-list.component';
 import { AccountListComponent } from './features/client/components/account-list/account-list.component';
 import { authGuard } from './core/guards/auth.guard';
 import { roleGuard } from './core/guards/role.guard';
@@ -26,8 +27,14 @@ const routes: Routes = [
   {
     path: 'employees/accounts/new',
     component: AccountCreateComponent,
-    //canActivate: [authGuard, roleGuard],
-    //data: { permission: 'CLIENT_MANAGE' }
+    canActivate: [authGuard, roleGuard],
+    data: { permission: 'CLIENT_MANAGE' }
+  },
+  {
+    path: 'employees/clients',
+    component: ClientListComponent,
+    canActivate: [authGuard, roleGuard],
+    data: { permission: 'CLIENT_MANAGE' }
   },
   {
     path: 'users',

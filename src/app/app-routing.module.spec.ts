@@ -8,14 +8,16 @@ describe('AppRoutingModule', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [AppRoutingModule]
+      imports: [AppRoutingModule],
     }).compileComponents();
 
     router = TestBed.inject(Router);
   });
 
   it('should have guarded route for employees/accounts/new with CLIENT_MANAGE permission', () => {
-    const route = router.config.find((r) => r.path === 'employees/accounts/new');
+    const route = router.config.find(
+      (r) => r.path === 'employees/accounts/new',
+    );
     if (!route) {
       throw new Error('Route employees/accounts/new should exist');
     }
@@ -25,6 +27,29 @@ describe('AppRoutingModule', () => {
     }
 
     // Guards are functions in this project; ensure both are present
+    if (!route.canActivate.includes(authGuard)) {
+      throw new Error('authGuard should be present on the route');
+    }
+
+    if (!route.canActivate.includes(roleGuard)) {
+      throw new Error('roleGuard should be present on the route');
+    }
+
+    if (route.data?.['permission'] !== 'CLIENT_MANAGE') {
+      throw new Error('Route should have data.permission === CLIENT_MANAGE');
+    }
+  });
+
+  it('should have guarded route for employees/clients with CLIENT_MANAGE permission', () => {
+    const route = router.config.find((r) => r.path === 'employees/clients');
+    if (!route) {
+      throw new Error('Route employees/clients should exist');
+    }
+
+    if (!route.canActivate) {
+      throw new Error('Route should have canActivate guards');
+    }
+
     if (!route.canActivate.includes(authGuard)) {
       throw new Error('authGuard should be present on the route');
     }
