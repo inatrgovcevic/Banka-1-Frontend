@@ -93,7 +93,13 @@
             Nema aktivnih računa.
           </p>
 
-          <div *ngFor="let acc of accounts" class="acc-item">
+          <div
+            *ngFor="let acc of accounts"
+            class="acc-item"
+            [class.acc-item--selected]="isSelected(acc)"
+            (click)="selectAccount(acc)"
+            style="cursor: pointer;"
+          >
             <div class="acc-item__row">
               <span class="acc-item__type">{{ acc.name }}</span>
               <span class="acc-item__num">{{ acc.accountNumber }}</span>
@@ -107,15 +113,56 @@
           </div>
         </div>
 
-        <!-- Poslednje transakcije — placeholder -->
+        <!-- Poslednje transakcije -->
         <div class="card card--transactions">
           <div class="card__head">
             <span class="card__label">PREGLED TRANSAKCIJA</span>
-            <div class="card__filter">
-              Prethodnih 7 dana <span class="material-icons">expand_more</span>
-            </div>
+            <span class="card__sublabel" *ngIf="selectedAccount">
+              {{ selectedAccount.name }}
+            </span>
           </div>
-          <p class="placeholder-msg">Poslednje transakcije — dostupno uskoro.</p>
+
+          <!-- Loading -->
+          <ng-container *ngIf="transactionsLoading">
+            <div *ngFor="let i of [1,2,3,4,5]" class="skel-tx">
+              <div class="skel skel--line"></div>
+              <div class="skel skel--line skel--short"></div>
+            </div>
+          </ng-container>
+
+          <!-- Error -->
+          <p *ngIf="!transactionsLoading && transactionsError" class="error-msg">
+            Greška pri učitavanju transakcija.
+          </p>
+
+          <!-- Prazno -->
+          <p *ngIf="!transactionsLoading && !transactionsError && transactions.length === 0" class="placeholder-msg">
+            Nema transakcija za ovaj račun.
+          </p>
+
+          <!-- Tabela transakcija -->
+          <table *ngIf="!transactionsLoading && !transactionsError && transactions.length > 0" class="tx-table">
+            <thead>
+            <tr>
+              <th>Datum</th>
+              <th>Primalac</th>
+              <th>Iznos</th>
+              <th>Status</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr *ngFor="let tx of transactions">
+              <td class="tx-date">{{ formatDate(tx.createdAt) }}</td>
+              <td class="tx-recipient">{{ tx.recipientName }}</td>
+              <td class="tx-amount">{{ formatAmount(tx.amount, tx.currency) }}</td>
+              <td>
+                  <span class="status-badge" [ngClass]="getStatusClass(tx.status)">
+                    {{ getStatusLabel(tx.status) }}
+                  </span>
+              </td>
+            </tr>
+            </tbody>
+          </table>
         </div>
 
         <!-- Menjačnica — placeholder -->

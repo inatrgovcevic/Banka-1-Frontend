@@ -297,3 +297,116 @@ $shadow-h:   0 4px 14px rgba(0,0,0,.12);
     .card { grid-column: 1; grid-row: auto; }
   }
 }
+
+
+// ── Dodatak na postojeći home.component.scss ──
+// Dodati na kraj fajla
+
+// Selektovani račun
+.acc-item {
+  &--selected {
+    background: #f0fdf4;
+    border-radius: 8px;
+    padding-left: 8px;
+    padding-right: 8px;
+    margin-left: -8px;
+    margin-right: -8px;
+
+    .acc-item__fill {
+      background: #16a34a;
+    }
+  }
+}
+
+// Card sublabel (naziv selektovanog računa)
+.card__sublabel {
+  font-size: 12px;
+  color: #6b7280;
+  font-weight: 500;
+}
+
+// Skeleton za transakcije
+.skel-tx {
+  padding: 10px 0;
+  border-bottom: 1px solid #f3f4f6;
+
+  .skel--line {
+    margin-bottom: 4px;
+  }
+}
+
+// Tabela transakcija
+.tx-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+
+  th {
+    text-align: left;
+    padding: 8px 10px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    color: #6b7280;
+    text-transform: uppercase;
+    border-bottom: 1px solid #e5e7eb;
+  }
+
+  td {
+    padding: 12px 10px;
+    border-bottom: 1px solid #f3f4f6;
+    color: #111827;
+
+    &:last-child {
+      border-bottom: none;
+    }
+  }
+
+  tr:last-child td {
+    border-bottom: none;
+  }
+}
+
+.tx-date {
+  color: #6b7280;
+  white-space: nowrap;
+}
+
+.tx-recipient {
+  font-weight: 500;
+}
+
+.tx-amount {
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+// Status badge-ovi
+.status-badge {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+
+  &.status--completed {
+    background: #dcfce7;
+    color: #166534;
+  }
+
+  &.status--pending {
+    background: #f3f4f6;
+    color: #374151;
+  }
+
+  &.status--failed {
+    background: #fee2e2;
+    color: #991b1b;
+  }
+
+  &.status--cancelled {
+    background: #fef3c7;
+    color: #92400e;
+  }
+}

@@ -2,10 +2,10 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { AuthService } from '../../../core/services/auth.service';
-
 import { NavbarComponent } from '../../../shared/components/navbar/navbar.component';
 import { AccountService } from '../services/account.service';
-import {Account} from "../models/account.model";
+import { Account } from '../models/account.model';
+import { Transaction } from '../models/transaction.model';
 
 @Component({
   selector: 'app-home',
@@ -15,9 +15,16 @@ import {Account} from "../models/account.model";
   styleUrls: ['./home.component.scss']
 })
 export class HomeComponent implements OnInit {
+  // ── Računi ──────────────────────────────────
   accounts: Account[] = [];
+  selectedAccount: Account | null = null;
   loading = true;
   error = false;
+
+  // ── Transakcije ──────────────────────────────
+  transactions: Transaction[] = [];
+  transactionsLoading = false;
+  transactionsError = false;
 
   constructor(
     private authService: AuthService,
@@ -28,6 +35,68 @@ export class HomeComponent implements OnInit {
     this.loadAccounts();
   }
 
+  // ── Učitavanje računa ────────────────────────
+  /*test
+  loadAccounts(): void {
+    this.loading = true;
+    this.error = false;
+
+    // TODO: zameniti sa pravim API pozivom kad bek bude spreman:
+    // this.accountService.getMyAccounts().subscribe({...})
+    setTimeout(() => {
+      this.accounts = [
+        {
+          id: 1,
+          name: 'Tekući račun',
+          accountNumber: '265000000000123456',
+          balance: 180000,
+          availableBalance: 178000,
+          reservedFunds: 2000,
+          currency: 'RSD',
+          status: 'ACTIVE',
+          subtype: 'STANDARD',
+          ownerId: 1,
+          ownerName: 'Petar Petrović',
+          employeeId: 2,
+          maintenanceFee: 255,
+          dailyLimit: 250000,
+          monthlyLimit: 1000000,
+          dailySpending: 150000,
+          monthlySpending: 600000,
+          createdAt: '2024-01-01',
+          expiryDate: '2027-01-01'
+        },
+        {
+          id: 2,
+          name: 'Devizni račun',
+          accountNumber: '265000000000654321',
+          balance: 5000,
+          availableBalance: 4850,
+          reservedFunds: 150,
+          currency: 'EUR',
+          status: 'ACTIVE',
+          subtype: 'FOREIGN_PERSONAL',
+          ownerId: 1,
+          ownerName: 'Petar Petrović',
+          employeeId: 2,
+          maintenanceFee: 0,
+          dailyLimit: 10000,
+          monthlyLimit: 50000,
+          dailySpending: 200,
+          monthlySpending: 1500,
+          createdAt: '2024-03-01',
+          expiryDate: '2027-03-01'
+        }
+      ];
+
+      if (this.accounts.length > 0) {
+        this.selectAccount(this.accounts[0]);
+      }
+
+      this.loading = false;
+    }, 600);
+  }*/
+
   loadAccounts(): void {
     this.loading = true;
     this.error = false;
@@ -35,6 +104,10 @@ export class HomeComponent implements OnInit {
     this.accountService.getMyAccounts().subscribe({
       next: (data: Account[]) => {
         this.accounts = data ?? [];
+        // Automatski selektuje prvi račun i učitava njegove transakcije
+        if (this.accounts.length > 0) {
+          this.selectAccount(this.accounts[0]);
+        }
         this.loading = false;
       },
       error: () => {
@@ -44,9 +117,118 @@ export class HomeComponent implements OnInit {
     });
   }
 
+  // ── Selekcija računa + refresh transakcija ───
+
+  selectAccount(account: Account): void {
+    this.selectedAccount = account;
+    this.loadTransactions(account.id);
+  }
+
+  isSelected(account: Account): boolean {
+    return this.selectedAccount?.id === account.id;
+  }
+
+  // ── Učitavanje transakcija ───────────────────
+
+  /*test
+  loadTransactions(accountId: number): void {
+    this.transactionsLoading = true;
+    this.transactionsError = false;
+    this.transactions = [];
+
+    // TODO: zameniti sa pravim API pozivom kad bek bude spreman:
+    // this.accountService.getTransactions(accountId, 0, 5).subscribe({...})
+    setTimeout(() => {
+      this.transactions = [
+        {
+          id: 1,
+          fromAccountId: accountId,
+          toAccountNumber: '265000000000111111',
+          recipientName: 'APPLE.COM',
+          amount: 3000,
+          currency: 'RSD',
+          status: 'COMPLETED',
+          description: 'Pretplata',
+          createdAt: '2026-03-03T10:00:00',
+          type: 'PAYMENT'
+        },
+        {
+          id: 2,
+          fromAccountId: accountId,
+          toAccountNumber: '265000000000222222',
+          recipientName: 'GLOVO',
+          amount: 2000,
+          currency: 'RSD',
+          status: 'FAILED',
+          description: 'Dostava',
+          createdAt: '2026-03-01T14:30:00',
+          type: 'PAYMENT'
+        },
+        {
+          id: 3,
+          fromAccountId: accountId,
+          toAccountNumber: '265000000000333333',
+          recipientName: 'LLC',
+          amount: 2787,
+          currency: 'RSD',
+          status: 'PENDING',
+          description: 'Usluge',
+          createdAt: '2026-03-01T09:15:00',
+          type: 'PAYMENT'
+        },
+        {
+          id: 4,
+          fromAccountId: accountId,
+          toAccountNumber: '265000000000444444',
+          recipientName: 'Bosch Inc',
+          amount: 50000,
+          currency: 'RSD',
+          status: 'PENDING',
+          description: 'Oprema',
+          createdAt: '2026-02-28T11:00:00',
+          type: 'PAYMENT'
+        },
+        {
+          id: 5,
+          fromAccountId: accountId,
+          toAccountNumber: '265000000000555555',
+          recipientName: 'Amazon EU',
+          amount: 8500,
+          currency: 'RSD',
+          status: 'COMPLETED',
+          description: 'Kupovina',
+          createdAt: '2026-02-27T16:45:00',
+          type: 'PAYMENT'
+        }
+      ];
+      this.transactionsLoading = false;
+    }, 500);
+  }*/
+
+  loadTransactions(accountId: number): void {
+    this.transactionsLoading = true;
+    this.transactionsError = false;
+    this.transactions = [];
+
+    this.accountService.getTransactions(accountId, 0, 5).subscribe({
+      next: (data: Transaction[]) => {
+        this.transactions = data ?? [];
+        this.transactionsLoading = false;
+      },
+      error: () => {
+        this.transactionsError = true;
+        this.transactionsLoading = false;
+      }
+    });
+  }
+
+  // ── Auth ─────────────────────────────────────
+
   logout(): void {
     this.authService.logout();
   }
+
+  // ── Helpers ──────────────────────────────────
 
   get totalAvailableBalance(): number {
     let total = 0;
@@ -66,11 +248,39 @@ export class HomeComponent implements OnInit {
     return `${intFormatted},${decPart} ${currency}`;
   }
 
+  formatDate(dateStr: string): string {
+    const date = new Date(dateStr);
+    const day = String(date.getDate()).padStart(2, '0');
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const year = date.getFullYear();
+    return `${day}.${month}.${year}`;
+  }
+
   getBalancePercent(account: Account): number {
     if (account.balance === 0) return 0;
     const percent = (account.availableBalance / account.balance) * 100;
     if (percent > 100) return 100;
     if (percent < 0) return 0;
     return percent;
+  }
+
+  getStatusClass(status: string): string {
+    const map: Record<string, string> = {
+      COMPLETED: 'status--completed',
+      PENDING: 'status--pending',
+      FAILED: 'status--failed',
+      CANCELLED: 'status--cancelled'
+    };
+    return map[status] ?? 'status--pending';
+  }
+
+  getStatusLabel(status: string): string {
+    const map: Record<string, string> = {
+      COMPLETED: 'Odobreno',
+      PENDING: 'Čekanje',
+      FAILED: 'Odbijeno',
+      CANCELLED: 'Otkazano'
+    };
+    return map[status] ?? status;
   }
 }
