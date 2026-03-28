@@ -23,9 +23,11 @@ export class AccountService {
     return this.http.get<any>(this.baseUrl, { params }).pipe(
       map((res) => {
         if (!res.content) return [];
-        return res.content.map((item: any) =>
+        const mapped = res.content.map((item: any) =>
           this.mapToAccountFromClient(item),
         );
+        console.log('Loaded accounts with currencies:', mapped.map((a: Account) => ({ name: a.name, accountNumber: a.accountNumber, currency: a.currency })));
+        return mapped;
       }),
     );
   }
@@ -92,14 +94,17 @@ export class AccountService {
       item.accountCategory,
     );
 
+    // Try to get currency from multiple possible field names
+    const currency = item.currency || item.valuta || item.tek || 'RSD';
+    
     return {
-      id: 0, // Not provided by API
+      id: this.hashAccountNumber(item.brojRacuna), // Generate unique ID from account number
       name: item.nazivRacuna || '',
       accountNumber: item.brojRacuna || '',
       balance: 0,
       availableBalance: item.raspolozivoStanje || 0,
       reservedFunds: 0,
-      currency: item.currency || 'RSD',
+      currency: currency,
       status: 'ACTIVE', // Assume all returned accounts are active
       subtype: subtype,
       ownerId: 0,
@@ -194,5 +199,18 @@ export class AccountService {
         status,
       },
     );
+  }
+
+  /**
+   * Generate unique numeric ID from account number
+   */
+  private hashAccountNumber(accountNumber: string): number {
+    let hash = 0;
+    for (let i = 0; i < accountNumber.length; i++) {
+      const char = accountNumber.charCodeAt(i);
+      hash = ((hash << 5) - hash) + char;
+      hash = hash & hash; // Convert to 32bit integer
+    }
+    return Math.abs(hash);
   }
 }
