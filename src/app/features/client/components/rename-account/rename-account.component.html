@@ -32,6 +32,7 @@
         </div>
       </div>
 
+      <p *ngIf="errorMessage" class="z-error px-5 pb-2">{{ errorMessage }}</p>
       <div class="z-modal-footer">
         <button type="button" class="z-btn z-btn-outline" (click)="onCancel()">Nazad</button>
         <button type="button" class="z-btn z-btn-primary" (click)="onConfirm()" [disabled]="renameForm.invalid">Potvrdi</button>

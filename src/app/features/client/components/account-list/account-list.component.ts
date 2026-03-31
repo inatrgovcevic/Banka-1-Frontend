@@ -45,7 +45,7 @@ export class AccountListComponent implements OnInit {
    * - Kada backend bude potpuno stabilan i više ne bude potrebe za lokalnim prikazom,
    *   zakomentarisani mock deo moze da se obrise.
    */
-  private loadAccounts(): void {
+  public loadAccounts(): void {
     this.isLoading = true;
     this.errorMessage = '';
 
@@ -179,7 +179,7 @@ export class AccountListComponent implements OnInit {
     this.transactionsLoading = true;
     this.transactions = [];
 
-    this.accountService.getTransactions(+accountNumber, 0, 5).subscribe({
+    this.accountService.getTransactions(accountNumber, 0, 5).subscribe({
       next: (data: Transaction[]) => {
         this.transactions = data ?? [];
         this.transactionsLoading = false;

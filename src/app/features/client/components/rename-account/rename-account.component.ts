@@ -18,6 +18,7 @@ export class RenameAccountComponent implements OnInit {
   @Output() updated = new EventEmitter<string>();
 
   renameForm: FormGroup;
+  errorMessage = '';
 
   constructor(private fb: FormBuilder, private accountService: AccountService) {
     this.renameForm = this.fb.group({
@@ -70,9 +71,15 @@ export class RenameAccountComponent implements OnInit {
     if (this.renameForm.valid) {
       // Trimujemo pre slanja na backend da ne bismo slali prazna mesta
       const newName = this.renameForm.value.newName.trim(); 
-      this.accountService.renameAccount(+this.account.accountNumber, newName).subscribe(() => {
-        this.updated.emit(newName);
-        this.onCancel();
+      this.errorMessage = '';
+      this.accountService.renameAccount(this.account.accountNumber, newName).subscribe({
+        next: () => {
+          this.updated.emit(newName);
+          this.onCancel();
+        },
+        error: () => {
+          this.errorMessage = 'Greška pri promeni naziva. Pokušajte ponovo.';
+        }
       });
     }
   }

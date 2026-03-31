@@ -59,14 +59,14 @@ export class HomeComponent implements OnInit {
 
   selectAccount(account: Account): void {
     this.selectedAccount = account;
-    this.loadTransactions(+account.accountNumber);
+    this.loadTransactions(account.accountNumber);
   }
 
   isSelected(account: Account): boolean {
     return this.selectedAccount?.id === account.id;
   }
 
-  loadTransactions(accountNumber: number): void {
+  loadTransactions(accountNumber: string): void {
     this.transactionsLoading = true;
     this.transactionsError = false;
     this.transactions = [];

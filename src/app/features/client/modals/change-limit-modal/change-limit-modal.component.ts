@@ -78,7 +78,7 @@ export class ChangeLimitModalComponent implements OnInit {
       verificationCode: formValue.verificationCode
     };
 
-    this.accountService.changeLimit(+this.account.accountNumber, payload.dailyLimit, payload.monthlyLimit, payload.verificationCode, '123456789')
+    this.accountService.changeLimit(this.account.accountNumber, payload.dailyLimit, payload.monthlyLimit, payload.verificationCode, '123456789')
       .subscribe({
         next: () => {
           this.toastService.success('Limiti računa su uspešno ažurirani.');

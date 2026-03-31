@@ -103,7 +103,7 @@ export class AccountService {
   }
 
   getTransactions(
-    accountNumber: number,
+    accountNumber: string,
     page = 0,
     size = 5,
   ): Observable<Transaction[]> {
@@ -117,15 +117,16 @@ export class AccountService {
       .pipe(map((res) => res.content));
   }
 
-  renameAccount(accountNumber: number, name: string): Observable<void> {
+  renameAccount(accountNumber: string, name: string): Observable<void> {
     return this.http.put<void>(
       `${this.api}/client/api/accounts/${accountNumber}/name`,
       { accountName: name },
+      { responseType: 'text' as 'json' },
     );
   }
 
   changeLimit(
-    accountNumber: number,
+    accountNumber: string,
     dailyLimit: number,
     monthlyLimit: number,
     verificationCode: string,
