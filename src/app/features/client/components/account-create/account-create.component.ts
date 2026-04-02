@@ -123,6 +123,53 @@ export class AccountCreateComponent implements OnInit, OnDestroy {
     { value: AccountOwnerType.BUSINESS, label: 'Poslovni' }
   ];
 
+  public readonly activityCodes: SelectOption<string>[] = [
+    { value: '1.11', label: '1.11 - Uzgoj žitarica i mahunarki' },
+    { value: '1.13', label: '1.13 - Uzgoj povrća' },
+    { value: '13.1', label: '13.1 - Priprema i predenje tekstilnih vlakana' },
+    { value: '24.1', label: '24.1 - Proizvodnja gvožđa i čelika' },
+    { value: '24.2', label: '24.2 - Proizvodnja čeličnih cevi' },
+    { value: '41.1', label: '41.1 - Razvoj građevinskih projekata' },
+    { value: '41.2', label: '41.2 - Izgradnja stambenih i nestambenih zgrada' },
+    { value: '42.11', label: '42.11 - Izgradnja puteva i autoputeva' },
+    { value: '42.12', label: '42.12 - Izgradnja železničkih i podzemnih pruga' },
+    { value: '42.13', label: '42.13 - Izgradnja mostova i tunela' },
+    { value: '42.21', label: '42.21 - Izgradnja vodovodnih projekata' },
+    { value: '42.22', label: '42.22 - Izgradnja elektroenergetskih mreža' },
+    { value: '5.1', label: '5.1 - Vađenje uglja' },
+    { value: '7.1', label: '7.1 - Vađenje gvozdenih ruda' },
+    { value: '8.11', label: '8.11 - Eksploatacija kamena' },
+    { value: '47.11', label: '47.11 - Trgovina na malo' },
+    { value: '56.1', label: '56.1 - Restorani i ugostiteljstvo' },
+    { value: '62.01', label: '62.01 - Računarsko programiranje' },
+    { value: '62.09', label: '62.09 - Ostale IT usluge' },
+    { value: '63.11', label: '63.11 - Obrada podataka i hosting' },
+    { value: '64.19', label: '64.19 - Ostale finansijske delatnosti' },
+    { value: '64.91', label: '64.91 - Finansijski lizing' },
+    { value: '65.11', label: '65.11 - Životno osiguranje' },
+    { value: '65.12', label: '65.12 - Neživotno osiguranje' },
+    { value: '66.21', label: '66.21 - Procena rizika i štete' },
+    { value: '68.1', label: '68.1 - Poslovanje nekretninama' },
+    { value: '53.1', label: '53.1 - Poštanske aktivnosti' },
+    { value: '53.2', label: '53.2 - Kurirske aktivnosti' },
+    { value: '85.1', label: '85.1 - Predškolsko obrazovanje' },
+    { value: '85.2', label: '85.2 - Osnovno obrazovanje' },
+    { value: '86.1', label: '86.1 - Bolničke aktivnosti' },
+    { value: '86.21', label: '86.21 - Opšta medicinska praksa' },
+    { value: '86.22', label: '86.22 - Specijalistička medicinska praksa' },
+    { value: '86.9', label: '86.9 - Ostale zdravstvene aktivnosti' },
+    { value: '84.12', label: '84.12 - Regulisanje delatnosti privrede' },
+    { value: '90.01', label: '90.01 - Delatnost pozorišta' },
+    { value: '90.02', label: '90.02 - Delatnost muzeja' },
+    { value: '90.04', label: '90.04 - Botanički i zoološki vrtovi' },
+    { value: '93.11', label: '93.11 - Sportski objekti' },
+    { value: '93.13', label: '93.13 - Delatnost teretana' },
+    { value: '93.19', label: '93.19 - Ostale sportske aktivnosti' },
+    { value: '26.11', label: '26.11 - Proizvodnja elektronskih komponenti' },
+    { value: '27.12', label: '27.12 - Proizvodnja električnih panela' },
+    { value: '29.1', label: '29.1 - Proizvodnja motornih vozila' }
+  ];
+
   public clients: ClientOption[] = [];
 
   constructor(

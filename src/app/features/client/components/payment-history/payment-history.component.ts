@@ -1,24 +1,32 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { RouterModule } from '@angular/router';
 import { Subject } from 'rxjs';
 import { takeUntil, debounceTime } from 'rxjs/operators';
-
+import { Router } from '@angular/router';
 import { NavbarComponent } from '../../../../shared/components/navbar/navbar.component';
 import { PaymentService } from '../../services/payment.service';
 import { AccountService } from '../../services/account.service';
 import { TransferService } from '../../services/transfer.service';
 import { Account } from '../../models/account.model';
-import { Payment, PaymentFilters, PaymentStatus } from '../../models/payment.model';
+import {
+  Payment,
+  PaymentFilters,
+  PaymentStatus,
+} from '../../models/payment.model';
 import { TransactionDetailModalComponent } from '../../modals/transaction-detail-modal/transaction-detail-modal.component';
 
 @Component({
   selector: 'app-payment-history',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterModule, NavbarComponent, TransactionDetailModalComponent],
+  imports: [
+    CommonModule,
+    FormsModule,
+    NavbarComponent,
+    TransactionDetailModalComponent,
+  ],
   templateUrl: './payment-history.component.html',
-  styleUrls: ['./payment-history.component.scss']
+  styleUrls: ['./payment-history.component.scss'],
 })
 export class PaymentHistoryComponent implements OnInit, OnDestroy {
   private readonly destroy$ = new Subject<void>();
@@ -40,7 +48,7 @@ export class PaymentHistoryComponent implements OnInit, OnDestroy {
     amountFrom: undefined,
     amountTo: undefined,
     status: '',
-    type: 'DOMESTIC'
+    type: 'DOMESTIC',
   };
 
   draftFilters: PaymentFilters = {
@@ -49,7 +57,7 @@ export class PaymentHistoryComponent implements OnInit, OnDestroy {
     amountFrom: undefined,
     amountTo: undefined,
     status: '',
-    type: 'DOMESTIC'
+    type: 'DOMESTIC',
   };
 
   activeTab: 'domestic' | 'transfers' = 'domestic';
@@ -62,20 +70,25 @@ export class PaymentHistoryComponent implements OnInit, OnDestroy {
     { value: '', label: 'Svi statusi' },
     { value: 'REALIZED', label: 'Realizovano' },
     { value: 'PROCESSING', label: 'U obradi' },
-    { value: 'REJECTED', label: 'Odbijeno' }
+    { value: 'REJECTED', label: 'Odbijeno' },
   ];
 
   constructor(
     private readonly paymentService: PaymentService,
     private readonly accountService: AccountService,
-    private readonly transferService: TransferService
+    private readonly transferService: TransferService,
+    private readonly router: Router
   ) {}
+  
+  public onNewPayment(): void {
+    this.router.navigate(['/accounts/payment/new']);
+  }
 
   public ngOnInit(): void {
     this.syncDraftFilters();
     this.accountService.getMyAccounts().subscribe({
       next: (accounts) => {
-        this.accounts = accounts.filter(a => a.status === 'ACTIVE');
+        this.accounts = accounts.filter((a) => a.status === 'ACTIVE');
         if (this.accounts.length > 0) {
           this.selectedAccountNumber = this.accounts[0].accountNumber;
           this.loadPayments();
@@ -83,7 +96,7 @@ export class PaymentHistoryComponent implements OnInit, OnDestroy {
       },
       error: () => {
         this.errorMessage = 'Greška pri učitavanju računa.';
-      }
+      },
     });
   }
 
@@ -102,10 +115,23 @@ export class PaymentHistoryComponent implements OnInit, OnDestroy {
     this.isLoading = true;
     this.errorMessage = '';
 
-    const currencyMap = new Map(this.accounts.map(a => [a.accountNumber, a.currency]));
-    const request$ = this.activeTab === 'transfers'
-      ? this.transferService.getTransferHistory(this.selectedAccountNumber, currencyMap, this.currentPage, this.pageSize)
-      : this.paymentService.getPayments(this.selectedAccountNumber, this.filters, this.currentPage, this.pageSize);
+    const currencyMap = new Map(
+      this.accounts.map((a) => [a.accountNumber, a.currency]),
+    );
+    const request$ =
+      this.activeTab === 'transfers'
+        ? this.transferService.getTransferHistory(
+            this.selectedAccountNumber,
+            currencyMap,
+            this.currentPage,
+            this.pageSize,
+          )
+        : this.paymentService.getPayments(
+            this.selectedAccountNumber,
+            this.filters,
+            this.currentPage,
+            this.pageSize,
+          );
 
     request$.pipe(takeUntil(this.destroy$)).subscribe({
       next: (page) => {
@@ -118,7 +144,7 @@ export class PaymentHistoryComponent implements OnInit, OnDestroy {
         console.error('Greška pri učitavanju:', error);
         this.errorMessage = 'Došlo je do greške pri učitavanju.';
         this.isLoading = false;
-      }
+      },
     });
   }
 
@@ -137,7 +163,7 @@ export class PaymentHistoryComponent implements OnInit, OnDestroy {
   public applyFilters(): void {
     this.filters = {
       ...this.draftFilters,
-      type: this.activeTab === 'domestic' ? 'DOMESTIC' : 'TRANSFER'
+      type: this.activeTab === 'domestic' ? 'DOMESTIC' : 'TRANSFER',
     };
 
     this.currentPage = 0;
@@ -152,7 +178,7 @@ export class PaymentHistoryComponent implements OnInit, OnDestroy {
       amountFrom: undefined,
       amountTo: undefined,
       status: '',
-      type: this.activeTab === 'domestic' ? 'DOMESTIC' : 'TRANSFER'
+      type: this.activeTab === 'domestic' ? 'DOMESTIC' : 'TRANSFER',
     };
 
     this.syncDraftFilters();
@@ -190,7 +216,7 @@ export class PaymentHistoryComponent implements OnInit, OnDestroy {
     if (!dateStr) {
       return 'N/A';
     }
-    
+
     // Parse date string in YYYY-MM-DD format to avoid timezone issues
     const [year, month, day] = dateStr.split('-');
     const date = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
@@ -198,17 +224,20 @@ export class PaymentHistoryComponent implements OnInit, OnDestroy {
     return date.toLocaleDateString('sr-RS', {
       day: '2-digit',
       month: '2-digit',
-      year: 'numeric'
+      year: 'numeric',
     });
   }
 
   public formatAmount(amount: number): string {
     const prefix = amount >= 0 ? '+' : '';
 
-    return prefix + new Intl.NumberFormat('sr-RS', {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2
-    }).format(amount);
+    return (
+      prefix +
+      new Intl.NumberFormat('sr-RS', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      }).format(amount)
+    );
   }
 
   public getStatusClass(status: PaymentStatus): string {
@@ -247,7 +276,7 @@ export class PaymentHistoryComponent implements OnInit, OnDestroy {
 
   private syncDraftFilters(): void {
     this.draftFilters = {
-      ...this.filters
+      ...this.filters,
     };
   }
 }

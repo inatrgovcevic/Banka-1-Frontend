@@ -57,10 +57,19 @@ export class ClientService {
 
     return this.http
       .get<ClientPageResponse | ClientDto[]>(this.base, { params })
-      .pipe(map((response) => this.normalizePageResponse(response, page, size).content));
+      .pipe(
+        map(
+          (response) =>
+            this.normalizePageResponse(response, page, size).content,
+        ),
+      );
   }
 
-  getClients(filters: ClientFilters = {}, page = 0, size = 10): Observable<ClientPageResponse> {
+  getClients(
+    filters: ClientFilters = {},
+    page = 0,
+    size = 10,
+  ): Observable<ClientPageResponse> {
     let params = new HttpParams()
       .set('page', page.toString())
       .set('size', size.toString());
@@ -79,8 +88,9 @@ export class ClientService {
 
     return this.http
       .get<ClientPageResponse>(this.base, { params })
-      .pipe(map((response) => this.normalizePageResponse(response, page, size)));
-
+      .pipe(
+        map((response) => this.normalizePageResponse(response, page, size)),
+      );
   }
 
   getClientById(id: string): Observable<ClientDto> {
@@ -91,7 +101,11 @@ export class ClientService {
     return this.http.put<ClientDto>(`${this.base}/${id}`, data);
   }
 
-  searchClients(query: string, page = 0, size = 10): Observable<ClientPageResponse> {
+  searchClients(
+    query: string,
+    page = 0,
+    size = 10,
+  ): Observable<ClientPageResponse> {
     const params = new HttpParams()
       .set('query', query.trim())
       .set('page', page.toString())
@@ -99,55 +113,94 @@ export class ClientService {
 
     return this.http
       .get<ClientPageResponse | ClientDto[]>(`${this.base}/search`, { params })
-      .pipe(map((response) => this.normalizePageResponse(response, page, size)));
+      .pipe(
+        map((response) => this.normalizePageResponse(response, page, size)),
+      );
   }
 
   private normalizePageResponse(
     response: ClientPageResponse | ClientDto[],
     page: number,
-    size: number
+    size: number,
   ): ClientPageResponse {
-    const content = Array.isArray(response) ? response : response.content ?? [];
-    const totalElements = Array.isArray(response) ? content.length : response.totalElements ?? content.length;
-    const resolvedSize = Array.isArray(response) ? size : response.size ?? size;
+    const content = Array.isArray(response)
+      ? response
+      : (response.content ?? []);
+    const totalElements = Array.isArray(response)
+      ? content.length
+      : (response.totalElements ?? content.length);
+    const resolvedSize = Array.isArray(response)
+      ? size
+      : (response.size ?? size);
     const totalPages = Array.isArray(response)
-      ? (totalElements === 0 ? 0 : Math.ceil(totalElements / resolvedSize))
-      : response.totalPages ?? (totalElements === 0 ? 0 : Math.ceil(totalElements / resolvedSize));
+      ? totalElements === 0
+        ? 0
+        : Math.ceil(totalElements / resolvedSize)
+      : (response.totalPages ??
+        (totalElements === 0 ? 0 : Math.ceil(totalElements / resolvedSize)));
 
     return {
       content,
       totalElements,
       totalPages,
-      number: Array.isArray(response) ? page : response.number ?? page,
-      size: resolvedSize
+      number: Array.isArray(response) ? page : (response.number ?? page),
+      size: resolvedSize,
     };
   }
   //Primaoci placanja
 
-  getAllRecipients(accountNumber: string, page = 0, size = 10): Observable<PaymentRecipient[]> {
+  getAllRecipients(
+    accountNumber: string,
+    page = 0,
+    size = 10,
+  ): Observable<PaymentRecipient[]> {
     const params = new HttpParams()
       .set('page', page.toString())
       .set('size', size.toString());
 
-    return this.http.get<any>(`${environment.apiUrl}/transfers/accounts/${accountNumber}`, { params }).pipe(
-      map(res => {
-        if (!res.content) return res;
-        return res.content;
+    return this.http
+      .get<any>(`${environment.apiUrl}/transfers/accounts/${accountNumber}`, {
+        params,
       })
-    );
+      .pipe(
+        map((res) => {
+          if (!res.content) return res;
+          return res.content;
+        }),
+      );
   }
 
   createPayment(dto: NewPaymentDto): Observable<string> {
-    return this.http.post(`${environment.apiUrl}/transactions/payments`, dto, { responseType: 'text' });
+    return this.http.post(`${environment.apiUrl}/transactions/payments`, dto, {
+      responseType: 'text',
+    });
   }
 
-  updateRecipient(id: number, name: string, accountNumber: string): Observable<PaymentRecipient> {
-    return this.http.put<PaymentRecipient>(`${environment.apiUrl}/transactions/api/payments/${id}`, { name, accountNumber });
+  updateRecipient(
+    id: number,
+    name: string,
+    accountNumber: string,
+  ): Observable<PaymentRecipient> {
+    return this.http.put<PaymentRecipient>(
+      `${environment.apiUrl}/transactions/api/payments/${id}`,
+      { name, accountNumber },
+    );
   }
 
   deleteRecipient(id: number): Observable<void> {
-    return this.http.delete<void>(`${environment.apiUrl}/transactions/api/payments/${id}`);
+    return this.http.delete<void>(
+      `${environment.apiUrl}/transactions/api/payments/${id}`,
+    );
   }
 
-
+  createRecipient(
+    id: number,
+    name: string,
+    accountNumber: string,
+  ): Observable<PaymentRecipient> {
+    return this.http.post<PaymentRecipient>(
+      `${environment.apiUrl}/transactions/api/payments`,
+      { id, name, accountNumber },
+    );
+  }
 }

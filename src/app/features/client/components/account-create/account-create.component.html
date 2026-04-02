@@ -121,7 +121,10 @@
 
             <div class="space-y-1.5">
               <label for="companyActivityCode" class="z-label">Šifra delatnosti</label>
-              <input id="companyActivityCode" formControlName="companyActivityCode" class="z-input" />
+              <select id="companyActivityCode" formControlName="companyActivityCode" class="z-select" style="max-height: 300px; overflow-y: auto;">
+                <option [ngValue]="null">-- odaberi --</option>
+                <option *ngFor="let code of activityCodes; trackBy: trackByOptionValue" [value]="code.value">{{ code.label }}</option>
+              </select>
               <small *ngIf="isInvalid('companyActivityCode')" class="z-error">Šifra delatnosti je obavezna.</small>
             </div>
 
