@@ -19,7 +19,7 @@
     <!-- Content -->
     <div *ngIf="!isLoading && !hasError && loan" class="bg-white rounded-2xl border border-gray-100 shadow-sm p-8">
       <!-- Loan Type Title -->
-      <h2 class="text-lg font-bold text-gray-900 mb-8">{{ getLoanTypeLabel(loan.loanType).toUpperCase() }}</h2>
+      <h2 class="text-lg font-bold text-gray-900 mb-8">{{ getLoanTypeLabel(loan.type).toUpperCase() }}</h2>
 
       <!-- Loan Info - Three Column Layout -->
       <div class="grid grid-cols-1 md:grid-cols-3 gap-x-12 gap-y-6 mb-10">
@@ -27,15 +27,15 @@
         <div class="space-y-5">
           <div>
             <p class="text-sm text-gray-500 mb-1">Broj kredita:</p>
-            <p class="text-sm font-medium text-gray-900">{{ loan.loanNumber }}</p>
+            <p class="text-sm font-medium text-gray-900">{{ loan.number }}</p>
           </div>
           <div>
             <p class="text-sm text-gray-500 mb-1">Vrsta kredita:</p>
-            <p class="text-sm font-medium text-gray-900">{{ getLoanTypeLabel(loan.loanType) }}</p>
+            <p class="text-sm font-medium text-gray-900">{{ getLoanTypeLabel(loan.type) }}</p>
           </div>
           <div>
             <p class="text-sm text-gray-500 mb-1">Ukupni iznos kredita:</p>
-            <p class="text-sm font-medium text-gray-900">{{ formatCurrency(loan.totalAmount, loan.currency) }}</p>
+            <p class="text-sm font-medium text-gray-900">{{ formatCurrency(loan.amount, loan.currency) }}</p>
           </div>
           <div>
             <p class="text-sm text-gray-500 mb-1">Valuta:</p>

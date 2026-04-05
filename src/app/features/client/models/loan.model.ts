@@ -36,29 +36,17 @@ export interface Installment {
 
 export interface Loan {
   id: string | number;
+  type: LoanType | string;
+  number: string;
+  amount: number;
   currency: string;
   status: LoanStatus | string;
-
-  // --- Polja koja koristi loan-list.component ---
-  type?: LoanType | string;
-  number?: string;
-  amount?: number;
-  createdDate?: string;
-  maturityDate?: string;
-  remainingBalance?: number;
-  interestRate?: number;
-  monthlyPayment?: number;
-
-  // --- Polja koja koristi loan-details.component ---
-  loanType?: string;
-  loanNumber?: string;
-  totalAmount?: number;
+  remainingDebt: number;
+  contractDate: string;
+  dueDate: string;
   repaymentPeriod?: number;
   nominalInterestRate?: number;
   effectiveInterestRate?: number;
-  contractDate?: string;
-  dueDate?: string;
   nextInstallmentAmount?: number;
   nextInstallmentDate?: string;
-  remainingDebt?: number;
 }
