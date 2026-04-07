@@ -14,14 +14,14 @@ import { environment } from '../../../../../environments/environment';
   styleUrls: ['./verification-modal.component.scss']
 })
 export class VerificationModalComponent implements OnInit {
-  @Input() operationType = 'TRANSFER';
-  @Input() relatedEntityId = '';
+  @Input() operationType: string = 'TRANSFER';
+  @Input() relatedEntityId: string = '';
 
   @Output() confirmed = new EventEmitter<number>();
   @Output() closed = new EventEmitter<void>();
 
-  verificationCode = '';
-  attempts = 0;
+  verificationCode: string = '';
+  attempts: number = 0;
   readonly maxAttempts: number = 3;
   isSendingCode = false;
   sessionId: number | null = null;

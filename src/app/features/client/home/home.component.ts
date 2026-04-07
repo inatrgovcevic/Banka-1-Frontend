@@ -99,7 +99,7 @@ export class HomeComponent implements OnInit {
     return total;
   }
 
-  formatAmount(amount: number, currency = 'RSD'): string {
+  formatAmount(amount: number, currency: string = 'RSD'): string {
     const fixed = Math.round(amount * 100) / 100;
     const str = String(fixed);
     const dotIndex = str.indexOf('.');
