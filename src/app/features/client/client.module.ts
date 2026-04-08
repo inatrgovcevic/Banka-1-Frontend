@@ -8,6 +8,9 @@ import { NewPaymentComponent } from './components/new-payment/new-payment.compon
 import { TransactionDetailModalComponent } from './modals/transaction-detail-modal/transaction-detail-modal.component';
 import {CardListComponent} from "@/features/client/components/card-list/card-list.component";
 import { LoanListComponent } from './components/loan-list/loan-list.component';
+import {RequestCardComponent} from "@/features/client/components/request-card/request-card.component";
+import { LoanRequestComponent } from './components/loan-request/loan-request.component';
+
 @NgModule({
   declarations: [
 
@@ -22,7 +25,9 @@ import { LoanListComponent } from './components/loan-list/loan-list.component';
     TransactionDetailModalComponent,
     NewPaymentComponent,
     CardListComponent,
-    LoanListComponent
+    LoanListComponent,
+    RequestCardComponent,
+    LoanRequestComponent
   ]
 })
 export class ClientModule {}

@@ -14,6 +14,7 @@ import { roleGuard } from './core/guards/role.guard';
 import { NotFoundComponent } from './shared/components/not-found/not-found.component';
 import { ForbiddenComponent } from './shared/components/forbidden/forbidden.component';
 import { NewPaymentComponent } from './features/client/components/new-payment/new-payment.component';
+import { ExchangeListComponent } from './features/employee/components/exchange-list/exchange-list.component';
 import { AccountManagementComponent } from './features/employee/account-management/account-management.component';
 import { AccountCardsPlaceholderComponent } from './features/employee/account-cards-placeholder/account-cards-placeholder.component';
 import { ActuaryManagementComponent } from './features/employee/components/actuary-management/actuary-management.component';
@@ -25,6 +26,9 @@ import { StockDetailComponent } from './features/securities/components/stock-det
 import { LoanListComponent } from './features/client/components/loan-list/loan-list.component';
 import { LoanDetailsComponent } from './features/client/components/loan-details/loan-details.component';
 import { ExchangeRateComponent } from './features/client/components/exchange-rate/exchange-rate.component';
+import { LoanRequestManagementComponent } from './features/employee/components/loan-request-management/loan-request-management.component';
+import { LoanManagementComponent } from './features/employee/components/loan-management/loan-management.component';
+
 
 const routes: Routes = [
   {
@@ -107,6 +111,13 @@ const routes: Routes = [
   component: TransferSameComponent,
   canActivate: [authGuard]
   },
+    {
+  path: 'exchange',
+  component: ExchangeListComponent,
+  canActivate: [authGuard, roleGuard],
+  data: { permission: 'EMPLOYEE_MANAGE_ALL' }
+},
+    
 
   {
     path: '403',
@@ -133,10 +144,27 @@ const routes: Routes = [
     canActivate: [authGuard]
   },
   {
+    path: 'loans/request',
+    component: LoanRequestComponent,
+    canActivate: [authGuard]
+  },
+  {
     path: 'loans/:id',
     component: LoanDetailsComponent,
     canActivate: [authGuard]
   },
+  {
+  path: 'loan-request-management',
+  component: LoanRequestManagementComponent,
+  canActivate: [authGuard, roleGuard],
+  data: { permission: 'CLIENT_MANAGE' }
+},
+{
+  path: 'loan-management',
+  component: LoanManagementComponent,
+  canActivate: [authGuard, roleGuard],
+  data: { permission: 'CLIENT_MANAGE' }
+},
   {
     path: 'securities',
     component: SecuritiesListComponent,
