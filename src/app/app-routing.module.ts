@@ -14,7 +14,6 @@ import { roleGuard } from './core/guards/role.guard';
 import { NotFoundComponent } from './shared/components/not-found/not-found.component';
 import { ForbiddenComponent } from './shared/components/forbidden/forbidden.component';
 import { NewPaymentComponent } from './features/client/components/new-payment/new-payment.component';
-import { ExchangeListComponent } from './features/employee/components/exchange-list/exchange-list.component';
 import { AccountManagementComponent } from './features/employee/account-management/account-management.component';
 import { AccountCardsPlaceholderComponent } from './features/employee/account-cards-placeholder/account-cards-placeholder.component';
 import { ActuaryManagementComponent } from './features/employee/components/actuary-management/actuary-management.component';
@@ -114,9 +113,8 @@ const routes: Routes = [
   },
   {
     path: 'exchange',
-    component: ExchangeListComponent,
-    canActivate: [authGuard, roleGuard],
-    data: { permission: 'EMPLOYEE_MANAGE_ALL' },
+    component: ExchangeRateComponent,
+    canActivate: [authGuard],
   },
   {
     path: '403',

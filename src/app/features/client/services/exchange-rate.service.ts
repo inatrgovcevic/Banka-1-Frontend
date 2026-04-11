@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, map, shareReplay } from 'rxjs';
+import { environment } from '../../../../environments/environment';
 
 export interface ExchangeRate {
   currency: string;
@@ -35,7 +36,7 @@ export const SUPPORTED_CURRENCIES = Object.keys(CURRENCY_META);
 @Injectable({ providedIn: 'root' })
 export class ExchangeRateService {
 
-  private readonly API_URL = 'https://open.er-api.com/v6/latest/RSD';
+  private readonly API_URL = `${environment.apiUrl}/exchange/rates`;
 
   /** Keširani rezultat da se ne pravi dupli API poziv */
   private cache$: Observable<ExchangeRatesResult> | null = null;
@@ -58,42 +59,58 @@ export class ExchangeRateService {
 
   /**
    * Mapira API odgovor u interni model.
-   * API vraća kurseve u obliku: 1 RSD = X strana valuta.
-   * Middle rate = 1 / API rate (koliko RSD košta 1 strana valuta).
-   * Kupovni kurs = middleRate * (1 - provizija)
-   * Prodajni kurs = middleRate * (1 + provizija)
+   * Backend vraća kurseve direktno ili u obliku relevantnih vrednosti.
    */
   private mapResponse(res: any): ExchangeRatesResult {
-    if (!res.rates || typeof res.rates !== 'object') {
-      throw new Error('Nevaljani format API odgovora');
+    console.log('Exchange rates response from backend:', res);
+    
+    // Ako backend već vraća nizom u očekivanom formatu
+    if (res.rates && Array.isArray(res.rates)) {
+      const rates = res.rates.filter((rate: any) => 
+        rate.currency && rate.buyRate !== undefined && rate.sellRate !== undefined
+      );
+      
+      if (rates.length === 0) {
+        throw new Error('Nema validnih kurseva u API odgovoru');
+      }
+
+      return {
+        rates,
+        lastUpdated: res.lastUpdated ? new Date(res.lastUpdated) : new Date(),
+      };
     }
 
-    const ratesInRSD: Record<string, number> = res.rates;
+    // Ako backend vraća kurseve kao objekt (kao external API)
+    if (res.rates && typeof res.rates === 'object' && !Array.isArray(res.rates)) {
+      const ratesInRSD: Record<string, number> = res.rates;
 
-    const rates: ExchangeRate[] = SUPPORTED_CURRENCIES
-      .filter(code => code in ratesInRSD && ratesInRSD[code] > 0)
-      .map(code => {
-        const middleRate = 1 / ratesInRSD[code];
-        const sellRate   = middleRate * (1 + SELL_COMMISSION);
-        const buyRate    = middleRate * (1 - BUY_COMMISSION);
-        return {
-          currency: code,
-          name:     CURRENCY_META[code].name,
-          flag:     CURRENCY_META[code].flag,
-          buyRate,
-          sellRate,
-          middleRate,
-        };
-      });
+      const rates: ExchangeRate[] = SUPPORTED_CURRENCIES
+        .filter(code => code in ratesInRSD && ratesInRSD[code] > 0)
+        .map(code => {
+          const middleRate = 1 / ratesInRSD[code];
+          const sellRate   = middleRate * (1 + SELL_COMMISSION);
+          const buyRate    = middleRate * (1 - BUY_COMMISSION);
+          return {
+            currency: code,
+            name:     CURRENCY_META[code].name,
+            flag:     CURRENCY_META[code].flag,
+            buyRate,
+            sellRate,
+            middleRate,
+          };
+        });
 
-    if (rates.length === 0) {
-      throw new Error('Nema validnih kurseva u API odgovoru');
+      if (rates.length === 0) {
+        throw new Error('Nema validnih kurseva u API odgovoru');
+      }
+
+      return {
+        rates,
+        lastUpdated: new Date(res.time_last_update_utc ?? Date.now()),
+      };
     }
 
-    return {
-      rates,
-      lastUpdated: new Date(res.time_last_update_utc ?? Date.now()),
-    };
+    throw new Error('Nevaljani format API odgovora');
   }
 
   /**
