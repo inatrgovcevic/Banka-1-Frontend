@@ -37,18 +37,37 @@ services:
     image: ghcr.io/raf-si-2025/banka-1-backend/employee-service:latest
     container_name: banka_employee_service
     environment:
+      # Database
       DB_HOST: postgres
       DB_PORT: 5432
       DB_NAME: banka
       DB_USER: postgres
       DB_PASSWORD: postgres
+      # RabbitMQ
       RABBIT_HOST: rabbitmq
       RABBIT_PORT: 5672
+      RABBITMQ_HOST: rabbitmq
+      RABBITMQ_PORT: 5672
+      RABBITMQ_USERNAME: guest
+      RABBITMQ_PASSWORD: guest
+      # Messaging
+      NOTIFICATION_QUEUE: notification-service-queue
+      NOTIFICATION_EXCHANGE: employee.events
+      NOTIFICATION_ROUTING_KEY: "employee.#"
+      # Server
       SERVER_PORT: 8081
+      USER_SERVER_PORT: 8081
+      # Security
       JWT_SECRET: ${JWT_SECRET:-ci-jwt-secret-banka1-testing-only}
+      # Observability (disabled for CI)
+      MANAGEMENT_OTLP_METRICS_EXPORT_URL: http://localhost:4318/v1/metrics
+      MANAGEMENT_OTLP_TRACING_ENDPOINT: http://localhost:4318/v1/traces
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://localhost:4318
       OTEL_TRACES_EXPORTER: none
       OTEL_METRICS_EXPORTER: none
       OTEL_LOGS_EXPORTER: none
+      OTEL_SERVICE_NAME: employeeService
+      LOGGING_FILE_PATH: /tmp
     depends_on:
       postgres:
         condition: service_healthy
@@ -69,15 +88,31 @@ services:
     image: ghcr.io/raf-si-2025/banka-1-backend/client-service:latest
     container_name: banka_client_service
     environment:
+      # Database
       CLIENT_SERVICE_DB_HOST: postgres
-      CLIENT_SERVICE_PORT: 8083
-      SERVER_PORT: 8083
+      # RabbitMQ
       RABBITMQ_HOST: rabbitmq
       RABBITMQ_PORT: 5672
+      RABBITMQ_USERNAME: guest
+      RABBITMQ_PASSWORD: guest
+      # Messaging
+      NOTIFICATION_QUEUE: notification-service-queue
+      NOTIFICATION_EXCHANGE: employee.events
+      NOTIFICATION_ROUTING_KEY: "employee.#"
+      # Server
+      CLIENT_SERVICE_PORT: 8083
+      SERVER_PORT: 8083
+      # Security
       JWT_SECRET: ${JWT_SECRET:-ci-jwt-secret-banka1-testing-only}
+      # Observability (disabled for CI)
+      MANAGEMENT_OTLP_METRICS_EXPORT_URL: http://localhost:4318/v1/metrics
+      MANAGEMENT_OTLP_TRACING_ENDPOINT: http://localhost:4318/v1/traces
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://localhost:4318
       OTEL_TRACES_EXPORTER: none
       OTEL_METRICS_EXPORTER: none
       OTEL_LOGS_EXPORTER: none
+      OTEL_SERVICE_NAME: clientService
+      LOGGING_FILE_PATH: /tmp
     depends_on:
       postgres:
         condition: service_healthy
@@ -98,23 +133,35 @@ services:
     image: ghcr.io/raf-si-2025/banka-1-backend/verification-service:latest
     container_name: banka_verification_service
     environment:
+      # Database
       VERIFICATION_SERVER_PORT: 8086
       VERIFICATION_DB_HOST: postgres
       VERIFICATION_DB_PORT: 5432
       VERIFICATION_DB_NAME: verificationdb
       VERIFICATION_DB_USER: postgres
       VERIFICATION_DB_PASSWORD: postgres
+      # RabbitMQ
       RABBITMQ_HOST: rabbitmq
       RABBITMQ_PORT: 5672
       RABBITMQ_USERNAME: guest
       RABBITMQ_PASSWORD: guest
+      # Messaging
       NOTIFICATION_QUEUE: notification-service-queue
       NOTIFICATION_EXCHANGE: employee.events
       NOTIFICATION_ROUTING_KEY: "employee.#"
+      # Server
+      SERVER_PORT: 8086
+      # Security
       JWT_SECRET: ${JWT_SECRET:-ci-jwt-secret-banka1-testing-only}
+      # Observability (disabled for CI)
+      MANAGEMENT_OTLP_METRICS_EXPORT_URL: http://localhost:4318/v1/metrics
+      MANAGEMENT_OTLP_TRACING_ENDPOINT: http://localhost:4318/v1/traces
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://localhost:4318
       OTEL_TRACES_EXPORTER: none
       OTEL_METRICS_EXPORTER: none
       OTEL_LOGS_EXPORTER: none
+      OTEL_SERVICE_NAME: verificationService
+      LOGGING_FILE_PATH: /tmp
     depends_on:
       postgres:
         condition: service_healthy
@@ -131,33 +178,85 @@ services:
       retries: 12
       start_period: 45s
 
+  exchange-service:
+    image: ghcr.io/raf-si-2025/banka-1-backend/exchange-service:latest
+    container_name: exchange-service
+    environment:
+      # Database
+      EXCHANGE_SERVICE_HOST: 0.0.0.0
+      EXCHANGE_SERVER_PORT: 8091
+      EXCHANGE_DB_HOST: postgres
+      EXCHANGE_DB_PORT: 5432
+      EXCHANGE_DB_NAME: exchange_db
+      EXCHANGE_DB_USER: postgres
+      EXCHANGE_DB_PASSWORD: postgres
+      # Server (Spring Boot standard + service-specific alias)
+      SERVER_PORT: 8091
+      # Security
+      JWT_SECRET: ${JWT_SECRET:-ci-jwt-secret-banka1-testing-only}
+      TWELVE_DATA_API_KEY: ""
+      # Observability (disabled for CI)
+      MANAGEMENT_OTLP_METRICS_EXPORT_URL: http://localhost:4318/v1/metrics
+      MANAGEMENT_OTLP_TRACING_ENDPOINT: http://localhost:4318/v1/traces
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://localhost:4318
+      OTEL_TRACES_EXPORTER: none
+      OTEL_METRICS_EXPORTER: none
+      OTEL_LOGS_EXPORTER: none
+      OTEL_SERVICE_NAME: exchange-service
+      LOGGING_FILE_PATH: /tmp
+    depends_on:
+      postgres:
+        condition: service_healthy
+    expose:
+      - "8091"
+    networks:
+      - banka-network
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8091/actuator/health/liveness || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 12
+      start_period: 45s
+
   account-service:
     image: ghcr.io/raf-si-2025/banka-1-backend/account-service:latest
     container_name: banka_account_service
     environment:
+      # Database
       ACCOUNT_DB_HOST: postgres
       ACCOUNT_DB_PORT: 5432
       ACCOUNT_DB_NAME: accountdb
       ACCOUNT_DB_USER: postgres
       ACCOUNT_DB_PASSWORD: postgres
+      # Server
       ACCOUNT_SERVER_PORT: 8084
       SERVER_PORT: 8084
+      # RabbitMQ
       RABBITMQ_HOST: rabbitmq
       RABBITMQ_PORT: 5672
       RABBITMQ_USERNAME: guest
       RABBITMQ_PASSWORD: guest
-      JWT_SECRET: ${JWT_SECRET:-ci-jwt-secret-banka1-testing-only}
-      SERVICES_USER_URL: http://employee-service:8081
-      SERVICES_CARD_URL: http://card-service:8092
+      # Messaging
       NOTIFICATION_QUEUE: notification-service-queue
       NOTIFICATION_EXCHANGE: employee.events
       NOTIFICATION_ROUTING_KEY: "employee.#"
+      # Inter-service
+      SERVICES_USER_URL: http://employee-service:8081
+      SERVICES_CARD_URL: http://card-service:8092
       SERVICES_VERIFICATION_URL: http://verification-service:8086
       SERVICE_VERIFICATION_PORT: 8086
       CLIENT_SERVER_PORT: 8083
+      # Security
+      JWT_SECRET: ${JWT_SECRET:-ci-jwt-secret-banka1-testing-only}
+      # Observability (disabled for CI)
+      MANAGEMENT_OTLP_METRICS_EXPORT_URL: http://localhost:4318/v1/metrics
+      MANAGEMENT_OTLP_TRACING_ENDPOINT: http://localhost:4318/v1/traces
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://localhost:4318
       OTEL_TRACES_EXPORTER: none
       OTEL_METRICS_EXPORTER: none
       OTEL_LOGS_EXPORTER: none
+      OTEL_SERVICE_NAME: accountService
+      LOGGING_FILE_PATH: /tmp
     depends_on:
       postgres:
         condition: service_healthy
@@ -178,54 +277,29 @@ services:
       retries: 12
       start_period: 45s
 
-  exchange-service:
-    image: ghcr.io/raf-si-2025/banka-1-backend/exchange-service:latest
-    container_name: exchange-service
-    environment:
-      EXCHANGE_SERVICE_HOST: 0.0.0.0
-      EXCHANGE_SERVER_PORT: 8091
-      EXCHANGE_DB_HOST: postgres
-      EXCHANGE_DB_PORT: 5432
-      EXCHANGE_DB_NAME: exchange_db
-      EXCHANGE_DB_USER: postgres
-      EXCHANGE_DB_PASSWORD: postgres
-      JWT_SECRET: ${JWT_SECRET:-ci-jwt-secret-banka1-testing-only}
-      TWELVE_DATA_API_KEY: ""
-      OTEL_TRACES_EXPORTER: none
-      OTEL_METRICS_EXPORTER: none
-      OTEL_LOGS_EXPORTER: none
-    depends_on:
-      postgres:
-        condition: service_healthy
-    expose:
-      - "8091"
-    networks:
-      - banka-network
-    healthcheck:
-      test: ["CMD-SHELL", "curl -f http://localhost:8091/actuator/health/liveness || exit 1"]
-      interval: 15s
-      timeout: 5s
-      retries: 12
-      start_period: 45s
-
   transfer-service:
     image: ghcr.io/raf-si-2025/banka-1-backend/transfer-service:latest
     container_name: banka_transfer_service
     environment:
-      SERVER_PORT: 8085
+      # Database
       DB_HOST: postgres
       DB_PORT: 5432
       DB_NAME: transferdb
       DB_USER: postgres
       DB_PASSWORD: postgres
-      JWT_SECRET: ${JWT_SECRET:-ci-jwt-secret-banka1-testing-only}
+      # Server
+      SERVER_PORT: 8085
+      TRANSFER_SERVICE_PORT: 8085
+      # RabbitMQ
       RABBITMQ_HOST: rabbitmq
       RABBITMQ_PORT: 5672
       RABBITMQ_USERNAME: guest
       RABBITMQ_PASSWORD: guest
+      # Messaging
       NOTIFICATION_QUEUE: notification-service-queue
       NOTIFICATION_EXCHANGE: employee.events
       NOTIFICATION_ROUTING_KEY: "employee.#"
+      # Inter-service
       CLIENT_SERVICE_HOST: client-service
       CLIENT_SERVER_PORT: 8083
       ACCOUNT_SERVICE_HOST: account-service
@@ -235,9 +309,17 @@ services:
       VERIFICATION_SERVICE_HOST: verification-service
       SERVICES_VERIFICATION_URL: http://verification-service:8086
       VERIFICATION_SERVER_PORT: 8086
+      # Security
+      JWT_SECRET: ${JWT_SECRET:-ci-jwt-secret-banka1-testing-only}
+      # Observability (disabled for CI)
+      MANAGEMENT_OTLP_METRICS_EXPORT_URL: http://localhost:4318/v1/metrics
+      MANAGEMENT_OTLP_TRACING_ENDPOINT: http://localhost:4318/v1/traces
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://localhost:4318
       OTEL_TRACES_EXPORTER: none
       OTEL_METRICS_EXPORTER: none
       OTEL_LOGS_EXPORTER: none
+      OTEL_SERVICE_NAME: transferService
+      LOGGING_FILE_PATH: /tmp
     depends_on:
       postgres:
         condition: service_healthy
@@ -264,14 +346,25 @@ services:
     image: ghcr.io/raf-si-2025/banka-1-backend/transaction-service:latest
     container_name: banka_transaction_service
     environment:
-      TRANSACTION_SERVER_PORT: 8087
-      SERVER_PORT: 8087
+      # Database
       TRANSACTION_DB_HOST: postgres
       TRANSACTION_DB_PORT: 5432
       TRANSACTION_DB_NAME: transaction_db
       TRANSACTION_DB_USER: postgres
       TRANSACTION_DB_PASSWORD: postgres
-      JWT_SECRET: ${JWT_SECRET:-ci-jwt-secret-banka1-testing-only}
+      # Server
+      TRANSACTION_SERVER_PORT: 8087
+      SERVER_PORT: 8087
+      # RabbitMQ
+      RABBITMQ_HOST: rabbitmq
+      RABBITMQ_PORT: 5672
+      RABBITMQ_USERNAME: guest
+      RABBITMQ_PASSWORD: guest
+      # Messaging
+      NOTIFICATION_QUEUE: notification-service-queue
+      NOTIFICATION_EXCHANGE: employee.events
+      NOTIFICATION_ROUTING_KEY: "employee.#"
+      # Inter-service
       SERVICES_USER_URL: http://employee-service:8081
       CLIENT_SERVER_PORT: 8083
       SERVICES_VERIFICATION_URL: http://verification-service:8086
@@ -280,16 +373,17 @@ services:
       SERVICE_EXCHANGE_PORT: 8091
       SERVICES_ACCOUNT_URL: http://account-service:8084
       SERVICE_ACCOUNT_PORT: 8084
-      RABBITMQ_HOST: rabbitmq
-      RABBITMQ_PORT: 5672
-      RABBITMQ_USERNAME: guest
-      RABBITMQ_PASSWORD: guest
-      NOTIFICATION_QUEUE: notification-service-queue
-      NOTIFICATION_EXCHANGE: employee.events
-      NOTIFICATION_ROUTING_KEY: "employee.#"
+      # Security
+      JWT_SECRET: ${JWT_SECRET:-ci-jwt-secret-banka1-testing-only}
+      # Observability (disabled for CI)
+      MANAGEMENT_OTLP_METRICS_EXPORT_URL: http://localhost:4318/v1/metrics
+      MANAGEMENT_OTLP_TRACING_ENDPOINT: http://localhost:4318/v1/traces
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://localhost:4318
       OTEL_TRACES_EXPORTER: none
       OTEL_METRICS_EXPORTER: none
       OTEL_LOGS_EXPORTER: none
+      OTEL_SERVICE_NAME: transaction-service
+      LOGGING_FILE_PATH: /tmp
     depends_on:
       postgres:
         condition: service_healthy
@@ -316,30 +410,42 @@ services:
     image: ghcr.io/raf-si-2025/banka-1-backend/card-service:latest
     container_name: banka_card_service
     environment:
-      CARD_SERVER_PORT: 8092
-      SERVER_PORT: 8092
+      # Database
       CARD_DB_HOST: postgres
       CARD_DB_PORT: 5432
       CARD_DB_NAME: card_db
       CARD_DB_USER: postgres
       CARD_DB_PASSWORD: postgres
+      # Server
+      CARD_SERVER_PORT: 8092
+      SERVER_PORT: 8092
+      # RabbitMQ
       RABBITMQ_HOST: rabbitmq
       RABBITMQ_PORT: 5672
       RABBITMQ_USERNAME: guest
       RABBITMQ_PASSWORD: guest
+      # Messaging
       NOTIFICATION_QUEUE: notification-service-queue
       NOTIFICATION_EXCHANGE: employee.events
       NOTIFICATION_CARD_ROUTING_KEY: "card.#"
+      # Inter-service
       SERVICES_CLIENT_URL: http://client-service:8083
       SERVICES_ACCOUNT_URL: http://account-service:8084
       SERVICES_VERIFICATION_URL: http://verification-service:8086
       SERVICE_VERIFICATION_PORT: 8086
       CARD_REQUEST_VERIFICATION_EXPIRATION_MINUTES: 15
       CARD_CREATION_AUTOMATIC_DEFAULT_LIMIT: 1000000
+      # Security
       JWT_SECRET: ${JWT_SECRET:-ci-jwt-secret-banka1-testing-only}
+      # Observability (disabled for CI)
+      MANAGEMENT_OTLP_METRICS_EXPORT_URL: http://localhost:4318/v1/metrics
+      MANAGEMENT_OTLP_TRACING_ENDPOINT: http://localhost:4318/v1/traces
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://localhost:4318
       OTEL_TRACES_EXPORTER: none
       OTEL_METRICS_EXPORTER: none
       OTEL_LOGS_EXPORTER: none
+      OTEL_SERVICE_NAME: cardService
+      LOGGING_FILE_PATH: /tmp
     depends_on:
       postgres:
         condition: service_healthy
@@ -364,14 +470,25 @@ services:
     image: ghcr.io/raf-si-2025/banka-1-backend/credit-service:latest
     container_name: banka_credit_service
     environment:
-      CREDIT_SERVER_PORT: 8089
-      SERVER_PORT: 8089
+      # Database
       CREDIT_DB_HOST: postgres
       CREDIT_DB_PORT: 5432
       CREDIT_DB_NAME: credit_db
       CREDIT_DB_USER: postgres
       CREDIT_DB_PASSWORD: postgres
-      JWT_SECRET: ${JWT_SECRET:-ci-jwt-secret-banka1-testing-only}
+      # Server
+      CREDIT_SERVER_PORT: 8089
+      SERVER_PORT: 8089
+      # RabbitMQ
+      RABBITMQ_HOST: rabbitmq
+      RABBITMQ_PORT: 5672
+      RABBITMQ_USERNAME: guest
+      RABBITMQ_PASSWORD: guest
+      # Messaging
+      NOTIFICATION_QUEUE: notification-service-queue
+      NOTIFICATION_EXCHANGE: employee.events
+      NOTIFICATION_ROUTING_KEY: "employee.#"
+      # Inter-service
       SERVICES_USER_URL: http://employee-service:8081
       CLIENT_SERVER_PORT: 8083
       SERVICES_CARD_URL: http://card-service:8092
@@ -379,16 +496,17 @@ services:
       SKIP_VERIFICATION: "false"
       SERVICES_EXCHANGE_URL: http://exchange-service:8091
       SERVICES_ACCOUNT_URL: http://account-service:8084
-      RABBITMQ_HOST: rabbitmq
-      RABBITMQ_PORT: 5672
-      RABBITMQ_USERNAME: guest
-      RABBITMQ_PASSWORD: guest
-      NOTIFICATION_QUEUE: notification-service-queue
-      NOTIFICATION_EXCHANGE: employee.events
-      NOTIFICATION_ROUTING_KEY: "employee.#"
+      # Security
+      JWT_SECRET: ${JWT_SECRET:-ci-jwt-secret-banka1-testing-only}
+      # Observability (disabled for CI)
+      MANAGEMENT_OTLP_METRICS_EXPORT_URL: http://localhost:4318/v1/metrics
+      MANAGEMENT_OTLP_TRACING_ENDPOINT: http://localhost:4318/v1/traces
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://localhost:4318
       OTEL_TRACES_EXPORTER: none
       OTEL_METRICS_EXPORTER: none
       OTEL_LOGS_EXPORTER: none
+      OTEL_SERVICE_NAME: credit-service
+      LOGGING_FILE_PATH: /tmp
     depends_on:
       postgres:
         condition: service_healthy
@@ -413,21 +531,32 @@ services:
     image: ghcr.io/raf-si-2025/banka-1-backend/stock-service:latest
     container_name: banka_stock_service
     environment:
-      STOCK_SERVICE_HOST: 0.0.0.0
-      STOCK_SERVICE_PORT: 8090
+      # Database
       STOCK_DB_HOST: postgres
       STOCK_DB_PORT: 5432
       STOCK_DB_NAME: stock_db
       STOCK_DB_USER: postgres
       STOCK_DB_PASSWORD: postgres
-      JWT_SECRET: ${JWT_SECRET:-ci-jwt-secret-banka1-testing-only}
+      # Server
+      STOCK_SERVICE_HOST: 0.0.0.0
+      STOCK_SERVICE_PORT: 8090
+      SERVER_PORT: 8090
+      # Inter-service
       STOCK_EXCHANGE_SERVICE_URL: http://exchange-service:8091
       STOCK_MARKET_DATA_BASE_URL: https://www.alphavantage.co
       STOCK_MARKET_DATA_API_KEY: ""
       ALPHA_VANTAGE_API_KEY: ""
+      # Security
+      JWT_SECRET: ${JWT_SECRET:-ci-jwt-secret-banka1-testing-only}
+      # Observability (disabled for CI)
+      MANAGEMENT_OTLP_METRICS_EXPORT_URL: http://localhost:4318/v1/metrics
+      MANAGEMENT_OTLP_TRACING_ENDPOINT: http://localhost:4318/v1/traces
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://localhost:4318
       OTEL_TRACES_EXPORTER: none
       OTEL_METRICS_EXPORTER: none
       OTEL_LOGS_EXPORTER: none
+      OTEL_SERVICE_NAME: stock-service
+      LOGGING_FILE_PATH: /tmp
     depends_on:
       postgres:
         condition: service_healthy
@@ -448,20 +577,25 @@ services:
     image: ghcr.io/raf-si-2025/banka-1-backend/order-service:latest
     container_name: banka_order_service
     environment:
-      ORDER_SERVER_PORT: 8088
+      # Database
       ORDER_DB_HOST: postgres
       ORDER_DB_PORT: 5432
       ORDER_DB_NAME: orderdb
       ORDER_DB_USER: postgres
       ORDER_DB_PASSWORD: postgres
-      JWT_SECRET: ${JWT_SECRET:-ci-jwt-secret-banka1-testing-only}
+      # Server
+      ORDER_SERVER_PORT: 8088
+      SERVER_PORT: 8088
+      # RabbitMQ
       RABBITMQ_HOST: rabbitmq
       RABBITMQ_PORT: 5672
       RABBITMQ_USERNAME: guest
       RABBITMQ_PASSWORD: guest
+      # Messaging
       NOTIFICATION_QUEUE: notification-service-queue
       NOTIFICATION_EXCHANGE: employee.events
       NOTIFICATION_ROUTING_KEY: "employee.#"
+      # Inter-service
       ACCOUNT_SERVICE_HOST: account-service
       ACCOUNT_SERVER_PORT: 8084
       EMPLOYEE_SERVICE_HOST: employee-service
@@ -472,9 +606,17 @@ services:
       EXCHANGE_SERVER_PORT: 8091
       STOCK_SERVICE_HOST: stock-service
       STOCK_SERVICE_PORT: 8090
+      # Security
+      JWT_SECRET: ${JWT_SECRET:-ci-jwt-secret-banka1-testing-only}
+      # Observability (disabled for CI)
+      MANAGEMENT_OTLP_METRICS_EXPORT_URL: http://localhost:4318/v1/metrics
+      MANAGEMENT_OTLP_TRACING_ENDPOINT: http://localhost:4318/v1/traces
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://localhost:4318
       OTEL_TRACES_EXPORTER: none
       OTEL_METRICS_EXPORTER: none
       OTEL_LOGS_EXPORTER: none
+      OTEL_SERVICE_NAME: order-service
+      LOGGING_FILE_PATH: /tmp
     depends_on:
       postgres:
         condition: service_healthy

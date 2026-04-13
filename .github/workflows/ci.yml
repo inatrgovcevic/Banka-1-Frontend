@@ -74,23 +74,34 @@ jobs:
           docker pull ghcr.io/raf-si-2025/banka-1-backend/order-service:latest
 
       - name: Warn if backend images unavailable
+        id: images-check
         if: steps.pull-images.outcome == 'failure'
         run: |
           echo "::warning::One or more backend images could not be pulled from GHCR."
           echo "::warning::Make sure the packages in RAF-SI-2025/banka-1-backend are set to 'internal' or 'public' visibility,"
           echo "::warning::or add a GHCR_PAT secret with read:packages scope."
-          echo "SKIP_CYPRESS=true" >> $GITHUB_ENV
+          echo "skip=true" >> $GITHUB_OUTPUT
 
       - name: Start backend stack
-        if: env.SKIP_CYPRESS != 'true'
+        if: steps.images-check.outputs.skip != 'true'
         working-directory: .github/ci
         run: |
           JWT_SECRET="${{ secrets.JWT_SECRET }}" \
-            docker compose -f docker-compose.backend.yml -p banka1-ci up -d
+            docker compose -f docker-compose.backend.yml -p banka1-ci up -d || {
+            echo "::error::docker compose up failed — dumping service logs:"
+            docker compose -f docker-compose.backend.yml -p banka1-ci ps
+            for svc in employee-service client-service exchange-service verification-service \
+                       account-service transfer-service transaction-service card-service \
+                       credit-service stock-service order-service; do
+              echo "=== $svc ==="
+              docker logs "banka_${svc}" 2>/dev/null || docker logs "${svc}" 2>/dev/null || true
+            done
+            exit 1
+          }
           echo "Backend services started."
 
       - name: Wait for API gateway to be ready
-        if: env.SKIP_CYPRESS != 'true'
+        if: steps.images-check.outputs.skip != 'true'
         run: |
           echo "Waiting for API gateway (this may take up to 5 minutes for JVM warm-up)..."
           for i in $(seq 1 60); do
@@ -107,11 +118,11 @@ jobs:
           exit 1
 
       - name: Build frontend
-        if: env.SKIP_CYPRESS != 'true'
+        if: steps.images-check.outputs.skip != 'true'
         run: npm run build
 
       - name: Run Cypress tests
-        if: env.SKIP_CYPRESS != 'true'
+        if: steps.images-check.outputs.skip != 'true'
         uses: cypress-io/github-action@v6
         with:
           install: false
@@ -130,7 +141,7 @@ jobs:
           retention-days: 7
 
       - name: Show backend logs on failure
-        if: failure() && env.SKIP_CYPRESS != 'true'
+        if: failure() && steps.images-check.outputs.skip != 'true'
         run: |
           echo "=== API Gateway ==="
           docker logs banka_api_gateway 2>/dev/null || true
@@ -144,7 +155,7 @@ jobs:
           docker logs banka_stock_service --tail=30 2>/dev/null || true
 
       - name: Tear down backend
-        if: always() && env.SKIP_CYPRESS != 'true'
+        if: always() && steps.images-check.outputs.skip != 'true'
         run: |
           docker compose -f .github/ci/docker-compose.backend.yml -p banka1-ci down -v \
             >/dev/null 2>&1 || true
