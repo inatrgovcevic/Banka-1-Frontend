@@ -88,6 +88,7 @@ jobs:
         run: |
           JWT_SECRET="${{ secrets.JWT_SECRET }}" \
           TWELVE_DATA_API_KEY="${{ secrets.TWELVE_DATA_API_KEY }}" \
+          STOCK_MARKET_DATA_API_KEY="${{ secrets.STOCK_MARKET_DATA_API_KEY }}" \
             docker compose -f docker-compose.backend.yml -p banka1-ci up -d || {
             echo "::error::docker compose up failed — dumping service logs:"
             docker compose -f docker-compose.backend.yml -p banka1-ci ps

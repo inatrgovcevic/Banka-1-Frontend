@@ -44,21 +44,42 @@ services:
       DB_USER: postgres
       DB_PASSWORD: postgres
       # RabbitMQ
-      RABBIT_HOST: rabbitmq
-      RABBIT_PORT: 5672
       RABBITMQ_HOST: rabbitmq
       RABBITMQ_PORT: 5672
       RABBITMQ_USERNAME: guest
       RABBITMQ_PASSWORD: guest
+      RABBITMQ_LISTENER_ENABLED: "true"
+      SPRING_RABBITMQ_HOST: rabbitmq
+      SPRING_RABBITMQ_PORT: 5672
+      SPRING_RABBITMQ_USERNAME: guest
+      SPRING_RABBITMQ_PASSWORD: guest
       # Messaging
       NOTIFICATION_QUEUE: notification-service-queue
       NOTIFICATION_EXCHANGE: employee.events
       NOTIFICATION_ROUTING_KEY: "employee.#"
+      NOTIFICATION_CARD_ROUTING_KEY: "card.#"
+      NOTIFICATION_CLIENT_ROUTING_KEY: "client.#"
+      NOTIFICATION_VERIFICATION_ROUTING_KEY: "client.verification"
       # Server
       SERVER_PORT: 8081
       USER_SERVER_PORT: 8081
       # Security
       JWT_SECRET: ${JWT_SECRET:-ci-jwt-secret-banka1-testing-only}
+      # Frontend URLs (required to build email links)
+      USER_ACTIVATE_ACCOUNT_URL: http://localhost:4200/auth/activate-account?token=
+      USER_RESET_PASSWORD_URL: http://localhost:4200/reset-password?token=
+      CLIENT_ACTIVATE_ACCOUNT_URL: http://localhost:4200/auth/activate-client?token=
+      CLIENT_RESET_PASSWORD_URL: http://localhost:4200/reset-password?token=
+      # Mail (dummy — emails won't be sent in CI)
+      MAIL_HOST: smtp.gmail.com
+      MAIL_PORT: 587
+      MAIL_USERNAME: ci@example.com
+      MAIL_PASSWORD: ci-dummy
+      MAIL_SMTP_AUTH: "true"
+      MAIL_SMTP_STARTTLS: "true"
+      # Logging / JPA
+      SPRING_JPA_HIBERNATE_DDL_AUTO: update
+      LOGGING_FILE_PATH: /tmp
       # Observability (disabled for CI)
       MANAGEMENT_OTLP_METRICS_EXPORT_URL: http://localhost:4318/v1/metrics
       MANAGEMENT_OTLP_TRACING_ENDPOINT: http://localhost:4318/v1/traces
@@ -66,8 +87,7 @@ services:
       OTEL_TRACES_EXPORTER: none
       OTEL_METRICS_EXPORTER: none
       OTEL_LOGS_EXPORTER: none
-      OTEL_SERVICE_NAME: employeeService
-      LOGGING_FILE_PATH: /tmp
+      OTEL_SERVICE_NAME: employee-service
     depends_on:
       postgres:
         condition: service_healthy
@@ -82,7 +102,7 @@ services:
       interval: 15s
       timeout: 5s
       retries: 12
-      start_period: 45s
+      start_period: 60s
 
   client-service:
     image: ghcr.io/raf-si-2025/banka-1-backend/client-service:latest
@@ -90,20 +110,46 @@ services:
     environment:
       # Database
       CLIENT_SERVICE_DB_HOST: postgres
+      CLIENT_SERVICE_DB_PORT: 5432
+      CLIENT_SERVICE_DB_NAME: clientdb
+      CLIENT_SERVICE_DB_USER: postgres
+      CLIENT_SERVICE_DB_PASSWORD: postgres
       # RabbitMQ
       RABBITMQ_HOST: rabbitmq
       RABBITMQ_PORT: 5672
       RABBITMQ_USERNAME: guest
       RABBITMQ_PASSWORD: guest
+      RABBITMQ_LISTENER_ENABLED: "true"
+      SPRING_RABBITMQ_HOST: rabbitmq
+      SPRING_RABBITMQ_PORT: 5672
+      SPRING_RABBITMQ_USERNAME: guest
+      SPRING_RABBITMQ_PASSWORD: guest
       # Messaging
       NOTIFICATION_QUEUE: notification-service-queue
       NOTIFICATION_EXCHANGE: employee.events
       NOTIFICATION_ROUTING_KEY: "employee.#"
+      NOTIFICATION_CARD_ROUTING_KEY: "card.#"
+      NOTIFICATION_CLIENT_ROUTING_KEY: "client.#"
+      NOTIFICATION_VERIFICATION_ROUTING_KEY: "client.verification"
       # Server
+      CLIENT_SERVER_PORT: 8083
       CLIENT_SERVICE_PORT: 8083
       SERVER_PORT: 8083
       # Security
       JWT_SECRET: ${JWT_SECRET:-ci-jwt-secret-banka1-testing-only}
+      # Frontend URLs
+      CLIENT_ACTIVATE_ACCOUNT_URL: http://localhost:4200/auth/activate-client?token=
+      CLIENT_RESET_PASSWORD_URL: http://localhost:4200/reset-password?token=
+      # Mail (dummy)
+      MAIL_HOST: smtp.gmail.com
+      MAIL_PORT: 587
+      MAIL_USERNAME: ci@example.com
+      MAIL_PASSWORD: ci-dummy
+      MAIL_SMTP_AUTH: "true"
+      MAIL_SMTP_STARTTLS: "true"
+      # Logging / JPA
+      SPRING_JPA_HIBERNATE_DDL_AUTO: update
+      LOGGING_FILE_PATH: /tmp
       # Observability (disabled for CI)
       MANAGEMENT_OTLP_METRICS_EXPORT_URL: http://localhost:4318/v1/metrics
       MANAGEMENT_OTLP_TRACING_ENDPOINT: http://localhost:4318/v1/traces
@@ -111,8 +157,7 @@ services:
       OTEL_TRACES_EXPORTER: none
       OTEL_METRICS_EXPORTER: none
       OTEL_LOGS_EXPORTER: none
-      OTEL_SERVICE_NAME: clientService
-      LOGGING_FILE_PATH: /tmp
+      OTEL_SERVICE_NAME: client-service
     depends_on:
       postgres:
         condition: service_healthy
@@ -127,7 +172,7 @@ services:
       interval: 15s
       timeout: 5s
       retries: 12
-      start_period: 45s
+      start_period: 60s
 
   verification-service:
     image: ghcr.io/raf-si-2025/banka-1-backend/verification-service:latest
@@ -145,14 +190,23 @@ services:
       RABBITMQ_PORT: 5672
       RABBITMQ_USERNAME: guest
       RABBITMQ_PASSWORD: guest
+      RABBITMQ_LISTENER_ENABLED: "true"
+      SPRING_RABBITMQ_HOST: rabbitmq
+      SPRING_RABBITMQ_PORT: 5672
+      SPRING_RABBITMQ_USERNAME: guest
+      SPRING_RABBITMQ_PASSWORD: guest
       # Messaging
       NOTIFICATION_QUEUE: notification-service-queue
       NOTIFICATION_EXCHANGE: employee.events
       NOTIFICATION_ROUTING_KEY: "employee.#"
+      NOTIFICATION_VERIFICATION_ROUTING_KEY: "client.verification"
       # Server
       SERVER_PORT: 8086
       # Security
       JWT_SECRET: ${JWT_SECRET:-ci-jwt-secret-banka1-testing-only}
+      # Logging / JPA
+      SPRING_JPA_HIBERNATE_DDL_AUTO: update
+      LOGGING_FILE_PATH: /tmp
       # Observability (disabled for CI)
       MANAGEMENT_OTLP_METRICS_EXPORT_URL: http://localhost:4318/v1/metrics
       MANAGEMENT_OTLP_TRACING_ENDPOINT: http://localhost:4318/v1/traces
@@ -160,8 +214,7 @@ services:
       OTEL_TRACES_EXPORTER: none
       OTEL_METRICS_EXPORTER: none
       OTEL_LOGS_EXPORTER: none
-      OTEL_SERVICE_NAME: verificationService
-      LOGGING_FILE_PATH: /tmp
+      OTEL_SERVICE_NAME: verification-service
     depends_on:
       postgres:
         condition: service_healthy
@@ -176,26 +229,24 @@ services:
       interval: 15s
       timeout: 5s
       retries: 12
-      start_period: 45s
+      start_period: 60s
 
   exchange-service:
     image: ghcr.io/raf-si-2025/banka-1-backend/exchange-service:latest
     container_name: exchange-service
     environment:
-      # Database (try both USER and USERNAME variants)
-      EXCHANGE_SERVICE_HOST: 0.0.0.0
-      EXCHANGE_SERVER_PORT: 8091
+      # Database
       EXCHANGE_DB_HOST: postgres
       EXCHANGE_DB_PORT: 5432
       EXCHANGE_DB_NAME: exchange_db
       EXCHANGE_DB_USER: postgres
       EXCHANGE_DB_USERNAME: postgres
       EXCHANGE_DB_PASSWORD: postgres
-      # Explicit Spring datasource fallback (overrides any application.yml)
+      # Explicit Spring datasource (bypasses any application.yml binding issues)
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/exchange_db
       SPRING_DATASOURCE_USERNAME: postgres
       SPRING_DATASOURCE_PASSWORD: postgres
-      # RabbitMQ (may be pulled in via shared starter even if unused)
+      # RabbitMQ (pulled in via shared starter)
       RABBITMQ_HOST: rabbitmq
       RABBITMQ_PORT: 5672
       RABBITMQ_USERNAME: guest
@@ -204,11 +255,17 @@ services:
       SPRING_RABBITMQ_PORT: 5672
       SPRING_RABBITMQ_USERNAME: guest
       SPRING_RABBITMQ_PASSWORD: guest
-      # Server (Spring Boot standard + service-specific alias)
-      SERVER_PORT: 8091
+      # Server
+      EXCHANGE_SERVER_PORT: 8085
+      EXCHANGE_SERVICE_HOST: 0.0.0.0
+      SERVER_PORT: 8085
+      # External API
+      TWELVE_DATA_API_KEY: ${TWELVE_DATA_API_KEY:-demo}
       # Security
       JWT_SECRET: ${JWT_SECRET:-ci-jwt-secret-banka1-testing-only}
-      TWELVE_DATA_API_KEY: demo
+      # Logging / JPA
+      SPRING_JPA_HIBERNATE_DDL_AUTO: update
+      LOGGING_FILE_PATH: /tmp
       # Observability (disabled for CI)
       MANAGEMENT_OTLP_METRICS_EXPORT_URL: http://localhost:4318/v1/metrics
       MANAGEMENT_OTLP_TRACING_ENDPOINT: http://localhost:4318/v1/traces
@@ -217,20 +274,21 @@ services:
       OTEL_METRICS_EXPORTER: none
       OTEL_LOGS_EXPORTER: none
       OTEL_SERVICE_NAME: exchange-service
-      LOGGING_FILE_PATH: /tmp
     depends_on:
       postgres:
         condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
     expose:
-      - "8091"
+      - "8085"
     networks:
       - banka-network
     healthcheck:
-      test: ["CMD-SHELL", "curl -f http://localhost:8091/actuator/health/liveness || exit 1"]
+      test: ["CMD-SHELL", "curl -f http://localhost:8085/actuator/health/liveness || exit 1"]
       interval: 15s
       timeout: 5s
       retries: 12
-      start_period: 45s
+      start_period: 60s
 
   account-service:
     image: ghcr.io/raf-si-2025/banka-1-backend/account-service:latest
@@ -238,6 +296,7 @@ services:
     environment:
       # Database
       ACCOUNT_DB_HOST: postgres
+      ACCOUNT_DB_INTERNAL_PORT: 5432
       ACCOUNT_DB_PORT: 5432
       ACCOUNT_DB_NAME: accountdb
       ACCOUNT_DB_USER: postgres
@@ -250,18 +309,29 @@ services:
       RABBITMQ_PORT: 5672
       RABBITMQ_USERNAME: guest
       RABBITMQ_PASSWORD: guest
+      RABBITMQ_LISTENER_ENABLED: "true"
+      SPRING_RABBITMQ_HOST: rabbitmq
+      SPRING_RABBITMQ_PORT: 5672
+      SPRING_RABBITMQ_USERNAME: guest
+      SPRING_RABBITMQ_PASSWORD: guest
       # Messaging
       NOTIFICATION_QUEUE: notification-service-queue
       NOTIFICATION_EXCHANGE: employee.events
       NOTIFICATION_ROUTING_KEY: "employee.#"
-      # Inter-service
-      SERVICES_USER_URL: http://employee-service:8081
-      SERVICES_CARD_URL: http://card-service:8092
+      NOTIFICATION_CARD_ROUTING_KEY: "card.#"
+      # Inter-service (account calls client-service for user info)
+      SERVICES_USER_URL: http://client-service:8083
+      CLIENT_SERVER_PORT: 8083
+      SERVICES_CARD_URL: http://card-service:8090
       SERVICES_VERIFICATION_URL: http://verification-service:8086
       SERVICE_VERIFICATION_PORT: 8086
-      CLIENT_SERVER_PORT: 8083
+      SERVICES_EXCHANGE_URL: http://exchange-service:8085
+      SERVICE_EXCHANGE_PORT: 8085
       # Security
       JWT_SECRET: ${JWT_SECRET:-ci-jwt-secret-banka1-testing-only}
+      # Logging / JPA
+      SPRING_JPA_HIBERNATE_DDL_AUTO: update
+      LOGGING_FILE_PATH: /tmp
       # Observability (disabled for CI)
       MANAGEMENT_OTLP_METRICS_EXPORT_URL: http://localhost:4318/v1/metrics
       MANAGEMENT_OTLP_TRACING_ENDPOINT: http://localhost:4318/v1/traces
@@ -269,14 +339,15 @@ services:
       OTEL_TRACES_EXPORTER: none
       OTEL_METRICS_EXPORTER: none
       OTEL_LOGS_EXPORTER: none
-      OTEL_SERVICE_NAME: accountService
-      LOGGING_FILE_PATH: /tmp
+      OTEL_SERVICE_NAME: account-service
     depends_on:
       postgres:
         condition: service_healthy
       rabbitmq:
         condition: service_healthy
       employee-service:
+        condition: service_healthy
+      client-service:
         condition: service_healthy
       verification-service:
         condition: service_healthy
@@ -289,7 +360,7 @@ services:
       interval: 15s
       timeout: 5s
       retries: 12
-      start_period: 45s
+      start_period: 60s
 
   transfer-service:
     image: ghcr.io/raf-si-2025/banka-1-backend/transfer-service:latest
@@ -301,14 +372,22 @@ services:
       DB_NAME: transferdb
       DB_USER: postgres
       DB_PASSWORD: postgres
+      TRANSFER_DB_NAME: transferdb
+      TRANSFER_DB_USER: postgres
+      TRANSFER_DB_PASSWORD: postgres
       # Server
-      SERVER_PORT: 8085
-      TRANSFER_SERVICE_PORT: 8085
+      SERVER_PORT: 8088
+      TRANSFER_SERVICE_PORT: 8088
       # RabbitMQ
       RABBITMQ_HOST: rabbitmq
       RABBITMQ_PORT: 5672
       RABBITMQ_USERNAME: guest
       RABBITMQ_PASSWORD: guest
+      RABBITMQ_LISTENER_ENABLED: "true"
+      SPRING_RABBITMQ_HOST: rabbitmq
+      SPRING_RABBITMQ_PORT: 5672
+      SPRING_RABBITMQ_USERNAME: guest
+      SPRING_RABBITMQ_PASSWORD: guest
       # Messaging
       NOTIFICATION_QUEUE: notification-service-queue
       NOTIFICATION_EXCHANGE: employee.events
@@ -319,12 +398,15 @@ services:
       ACCOUNT_SERVICE_HOST: account-service
       ACCOUNT_SERVER_PORT: 8084
       EXCHANGE_SERVICE_HOST: exchange-service
-      EXCHANGE_SERVER_PORT: 8091
+      EXCHANGE_SERVER_PORT: 8085
       VERIFICATION_SERVICE_HOST: verification-service
       SERVICES_VERIFICATION_URL: http://verification-service:8086
       VERIFICATION_SERVER_PORT: 8086
       # Security
       JWT_SECRET: ${JWT_SECRET:-ci-jwt-secret-banka1-testing-only}
+      # Logging / JPA
+      SPRING_JPA_HIBERNATE_DDL_AUTO: update
+      LOGGING_FILE_PATH: /tmp
       # Observability (disabled for CI)
       MANAGEMENT_OTLP_METRICS_EXPORT_URL: http://localhost:4318/v1/metrics
       MANAGEMENT_OTLP_TRACING_ENDPOINT: http://localhost:4318/v1/traces
@@ -332,8 +414,7 @@ services:
       OTEL_TRACES_EXPORTER: none
       OTEL_METRICS_EXPORTER: none
       OTEL_LOGS_EXPORTER: none
-      OTEL_SERVICE_NAME: transferService
-      LOGGING_FILE_PATH: /tmp
+      OTEL_SERVICE_NAME: transfer-service
     depends_on:
       postgres:
         condition: service_healthy
@@ -346,15 +427,15 @@ services:
       verification-service:
         condition: service_healthy
     expose:
-      - "8085"
+      - "8088"
     networks:
       - banka-network
     healthcheck:
-      test: ["CMD-SHELL", "curl -f http://localhost:8085/actuator/health/liveness || exit 1"]
+      test: ["CMD-SHELL", "curl -f http://localhost:8088/actuator/health/liveness || exit 1"]
       interval: 15s
       timeout: 5s
       retries: 12
-      start_period: 45s
+      start_period: 60s
 
   transaction-service:
     image: ghcr.io/raf-si-2025/banka-1-backend/transaction-service:latest
@@ -366,6 +447,10 @@ services:
       TRANSACTION_DB_NAME: transaction_db
       TRANSACTION_DB_USER: postgres
       TRANSACTION_DB_PASSWORD: postgres
+      DB_HOST: postgres
+      DB_NAME: transaction_db
+      DB_USER: postgres
+      DB_PASSWORD: postgres
       # Server
       TRANSACTION_SERVER_PORT: 8087
       SERVER_PORT: 8087
@@ -374,6 +459,11 @@ services:
       RABBITMQ_PORT: 5672
       RABBITMQ_USERNAME: guest
       RABBITMQ_PASSWORD: guest
+      RABBITMQ_LISTENER_ENABLED: "true"
+      SPRING_RABBITMQ_HOST: rabbitmq
+      SPRING_RABBITMQ_PORT: 5672
+      SPRING_RABBITMQ_USERNAME: guest
+      SPRING_RABBITMQ_PASSWORD: guest
       # Messaging
       NOTIFICATION_QUEUE: notification-service-queue
       NOTIFICATION_EXCHANGE: employee.events
@@ -383,12 +473,15 @@ services:
       CLIENT_SERVER_PORT: 8083
       SERVICES_VERIFICATION_URL: http://verification-service:8086
       SERVICE_VERIFICATION_PORT: 8086
-      SERVICES_EXCHANGE_URL: http://exchange-service:8091
-      SERVICE_EXCHANGE_PORT: 8091
+      SERVICES_EXCHANGE_URL: http://exchange-service:8085
+      SERVICE_EXCHANGE_PORT: 8085
       SERVICES_ACCOUNT_URL: http://account-service:8084
       SERVICE_ACCOUNT_PORT: 8084
       # Security
       JWT_SECRET: ${JWT_SECRET:-ci-jwt-secret-banka1-testing-only}
+      # Logging / JPA
+      SPRING_JPA_HIBERNATE_DDL_AUTO: update
+      LOGGING_FILE_PATH: /tmp
       # Observability (disabled for CI)
       MANAGEMENT_OTLP_METRICS_EXPORT_URL: http://localhost:4318/v1/metrics
       MANAGEMENT_OTLP_TRACING_ENDPOINT: http://localhost:4318/v1/traces
@@ -397,7 +490,6 @@ services:
       OTEL_METRICS_EXPORTER: none
       OTEL_LOGS_EXPORTER: none
       OTEL_SERVICE_NAME: transaction-service
-      LOGGING_FILE_PATH: /tmp
     depends_on:
       postgres:
         condition: service_healthy
@@ -418,7 +510,7 @@ services:
       interval: 15s
       timeout: 5s
       retries: 12
-      start_period: 45s
+      start_period: 60s
 
   card-service:
     image: ghcr.io/raf-si-2025/banka-1-backend/card-service:latest
@@ -427,17 +519,23 @@ services:
       # Database
       CARD_DB_HOST: postgres
       CARD_DB_PORT: 5432
+      CARD_DB_INTERNAL_PORT: 5432
       CARD_DB_NAME: card_db
       CARD_DB_USER: postgres
       CARD_DB_PASSWORD: postgres
       # Server
-      CARD_SERVER_PORT: 8092
-      SERVER_PORT: 8092
+      CARD_SERVER_PORT: 8090
+      SERVER_PORT: 8090
       # RabbitMQ
       RABBITMQ_HOST: rabbitmq
       RABBITMQ_PORT: 5672
       RABBITMQ_USERNAME: guest
       RABBITMQ_PASSWORD: guest
+      RABBITMQ_LISTENER_ENABLED: "true"
+      SPRING_RABBITMQ_HOST: rabbitmq
+      SPRING_RABBITMQ_PORT: 5672
+      SPRING_RABBITMQ_USERNAME: guest
+      SPRING_RABBITMQ_PASSWORD: guest
       # Messaging
       NOTIFICATION_QUEUE: notification-service-queue
       NOTIFICATION_EXCHANGE: employee.events
@@ -451,6 +549,9 @@ services:
       CARD_CREATION_AUTOMATIC_DEFAULT_LIMIT: 1000000
       # Security
       JWT_SECRET: ${JWT_SECRET:-ci-jwt-secret-banka1-testing-only}
+      # Logging / JPA
+      SPRING_JPA_HIBERNATE_DDL_AUTO: update
+      LOGGING_FILE_PATH: /tmp
       # Observability (disabled for CI)
       MANAGEMENT_OTLP_METRICS_EXPORT_URL: http://localhost:4318/v1/metrics
       MANAGEMENT_OTLP_TRACING_ENDPOINT: http://localhost:4318/v1/traces
@@ -458,8 +559,7 @@ services:
       OTEL_TRACES_EXPORTER: none
       OTEL_METRICS_EXPORTER: none
       OTEL_LOGS_EXPORTER: none
-      OTEL_SERVICE_NAME: cardService
-      LOGGING_FILE_PATH: /tmp
+      OTEL_SERVICE_NAME: card-service
     depends_on:
       postgres:
         condition: service_healthy
@@ -470,15 +570,15 @@ services:
       verification-service:
         condition: service_healthy
     expose:
-      - "8092"
+      - "8090"
     networks:
       - banka-network
     healthcheck:
-      test: ["CMD-SHELL", "curl -f http://localhost:8092/actuator/health/liveness || exit 1"]
+      test: ["CMD-SHELL", "curl -f http://localhost:8090/actuator/health/liveness || exit 1"]
       interval: 15s
       timeout: 5s
       retries: 12
-      start_period: 45s
+      start_period: 60s
 
   credit-service:
     image: ghcr.io/raf-si-2025/banka-1-backend/credit-service:latest
@@ -498,6 +598,11 @@ services:
       RABBITMQ_PORT: 5672
       RABBITMQ_USERNAME: guest
       RABBITMQ_PASSWORD: guest
+      RABBITMQ_LISTENER_ENABLED: "true"
+      SPRING_RABBITMQ_HOST: rabbitmq
+      SPRING_RABBITMQ_PORT: 5672
+      SPRING_RABBITMQ_USERNAME: guest
+      SPRING_RABBITMQ_PASSWORD: guest
       # Messaging
       NOTIFICATION_QUEUE: notification-service-queue
       NOTIFICATION_EXCHANGE: employee.events
@@ -505,13 +610,16 @@ services:
       # Inter-service
       SERVICES_USER_URL: http://employee-service:8081
       CLIENT_SERVER_PORT: 8083
-      SERVICES_CARD_URL: http://card-service:8092
+      SERVICES_CARD_URL: http://card-service:8090
       SERVICES_VERIFICATION_URL: http://verification-service:8086
       SKIP_VERIFICATION: "false"
-      SERVICES_EXCHANGE_URL: http://exchange-service:8091
+      SERVICES_EXCHANGE_URL: http://exchange-service:8085
       SERVICES_ACCOUNT_URL: http://account-service:8084
       # Security
       JWT_SECRET: ${JWT_SECRET:-ci-jwt-secret-banka1-testing-only}
+      # Logging / JPA
+      SPRING_JPA_HIBERNATE_DDL_AUTO: update
+      LOGGING_FILE_PATH: /tmp
       # Observability (disabled for CI)
       MANAGEMENT_OTLP_METRICS_EXPORT_URL: http://localhost:4318/v1/metrics
       MANAGEMENT_OTLP_TRACING_ENDPOINT: http://localhost:4318/v1/traces
@@ -520,7 +628,6 @@ services:
       OTEL_METRICS_EXPORTER: none
       OTEL_LOGS_EXPORTER: none
       OTEL_SERVICE_NAME: credit-service
-      LOGGING_FILE_PATH: /tmp
     depends_on:
       postgres:
         condition: service_healthy
@@ -539,9 +646,10 @@ services:
       interval: 15s
       timeout: 5s
       retries: 12
-      start_period: 45s
+      start_period: 60s
 
   stock-service:
+    # Card-service also uses 8090 in the .env; stock-service gets 8091 to avoid collision.
     image: ghcr.io/raf-si-2025/banka-1-backend/stock-service:latest
     container_name: banka_stock_service
     environment:
@@ -553,15 +661,19 @@ services:
       STOCK_DB_PASSWORD: postgres
       # Server
       STOCK_SERVICE_HOST: 0.0.0.0
-      STOCK_SERVICE_PORT: 8090
-      SERVER_PORT: 8090
+      STOCK_SERVICE_PORT: 8091
+      SERVER_PORT: 8091
       # Inter-service
-      STOCK_EXCHANGE_SERVICE_URL: http://exchange-service:8091
+      STOCK_EXCHANGE_SERVICE_URL: http://exchange-service:8085
+      # External API
       STOCK_MARKET_DATA_BASE_URL: https://www.alphavantage.co
-      STOCK_MARKET_DATA_API_KEY: ""
-      ALPHA_VANTAGE_API_KEY: ""
+      STOCK_MARKET_DATA_API_KEY: ${STOCK_MARKET_DATA_API_KEY:-}
+      ALPHA_VANTAGE_API_KEY: ${STOCK_MARKET_DATA_API_KEY:-}
       # Security
       JWT_SECRET: ${JWT_SECRET:-ci-jwt-secret-banka1-testing-only}
+      # Logging / JPA
+      SPRING_JPA_HIBERNATE_DDL_AUTO: update
+      LOGGING_FILE_PATH: /tmp
       # Observability (disabled for CI)
       MANAGEMENT_OTLP_METRICS_EXPORT_URL: http://localhost:4318/v1/metrics
       MANAGEMENT_OTLP_TRACING_ENDPOINT: http://localhost:4318/v1/traces
@@ -570,22 +682,21 @@ services:
       OTEL_METRICS_EXPORTER: none
       OTEL_LOGS_EXPORTER: none
       OTEL_SERVICE_NAME: stock-service
-      LOGGING_FILE_PATH: /tmp
     depends_on:
       postgres:
         condition: service_healthy
       exchange-service:
         condition: service_healthy
     expose:
-      - "8090"
+      - "8091"
     networks:
       - banka-network
     healthcheck:
-      test: ["CMD-SHELL", "curl -f http://localhost:8090/actuator/health/liveness || exit 1"]
+      test: ["CMD-SHELL", "curl -f http://localhost:8091/actuator/health/liveness || exit 1"]
       interval: 15s
       timeout: 5s
       retries: 12
-      start_period: 45s
+      start_period: 60s
 
   order-service:
     image: ghcr.io/raf-si-2025/banka-1-backend/order-service:latest
@@ -598,13 +709,18 @@ services:
       ORDER_DB_USER: postgres
       ORDER_DB_PASSWORD: postgres
       # Server
-      ORDER_SERVER_PORT: 8088
-      SERVER_PORT: 8088
+      ORDER_SERVER_PORT: 8092
+      SERVER_PORT: 8092
       # RabbitMQ
       RABBITMQ_HOST: rabbitmq
       RABBITMQ_PORT: 5672
       RABBITMQ_USERNAME: guest
       RABBITMQ_PASSWORD: guest
+      RABBITMQ_LISTENER_ENABLED: "true"
+      SPRING_RABBITMQ_HOST: rabbitmq
+      SPRING_RABBITMQ_PORT: 5672
+      SPRING_RABBITMQ_USERNAME: guest
+      SPRING_RABBITMQ_PASSWORD: guest
       # Messaging
       NOTIFICATION_QUEUE: notification-service-queue
       NOTIFICATION_EXCHANGE: employee.events
@@ -617,11 +733,14 @@ services:
       CLIENT_SERVICE_HOST: client-service
       CLIENT_SERVER_PORT: 8083
       EXCHANGE_SERVICE_HOST: exchange-service
-      EXCHANGE_SERVER_PORT: 8091
+      EXCHANGE_SERVER_PORT: 8085
       STOCK_SERVICE_HOST: stock-service
-      STOCK_SERVICE_PORT: 8090
+      STOCK_SERVICE_PORT: 8091
       # Security
       JWT_SECRET: ${JWT_SECRET:-ci-jwt-secret-banka1-testing-only}
+      # Logging / JPA
+      SPRING_JPA_HIBERNATE_DDL_AUTO: update
+      LOGGING_FILE_PATH: /tmp
       # Observability (disabled for CI)
       MANAGEMENT_OTLP_METRICS_EXPORT_URL: http://localhost:4318/v1/metrics
       MANAGEMENT_OTLP_TRACING_ENDPOINT: http://localhost:4318/v1/traces
@@ -630,7 +749,6 @@ services:
       OTEL_METRICS_EXPORTER: none
       OTEL_LOGS_EXPORTER: none
       OTEL_SERVICE_NAME: order-service
-      LOGGING_FILE_PATH: /tmp
     depends_on:
       postgres:
         condition: service_healthy
@@ -641,15 +759,15 @@ services:
       account-service:
         condition: service_healthy
     expose:
-      - "8088"
+      - "8092"
     networks:
       - banka-network
     healthcheck:
-      test: ["CMD-SHELL", "curl -f http://localhost:8088/actuator/health/liveness || exit 1"]
+      test: ["CMD-SHELL", "curl -f http://localhost:8092/actuator/health/liveness || exit 1"]
       interval: 15s
       timeout: 5s
       retries: 12
-      start_period: 45s
+      start_period: 60s
 
   # ── API Gateway (nginx) ───────────────────────────────────────────────────
   api-gateway:
