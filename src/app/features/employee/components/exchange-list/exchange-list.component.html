@@ -4,22 +4,39 @@
   <div class="p-6">
     <div class="flex items-center justify-between mb-4">
       <h1 class="text-2xl font-bold text-foreground">Berza</h1>
-      <label class="flex items-center gap-2 cursor-pointer select-none">
-        <span class="text-sm text-muted-foreground">Prikaži samo otvorene</span>
-        <div class="relative">
-          <input type="checkbox" class="sr-only" [(ngModel)]="showOpenOnly">
-          <div class="w-10 h-6 rounded-full transition-colors"
-               [ngClass]="showOpenOnly ? 'bg-green-500' : 'bg-muted-foreground/30'">
+      <div class="flex items-center gap-6">
+        <!-- Toggle za mock podatke -->
+        <label class="flex items-center gap-2 cursor-pointer select-none">
+          <span class="text-sm text-muted-foreground">{{ useMockData ? 'Mock podaci' : 'Live podaci' }}</span>
+          <div class="relative">
+            <input type="checkbox" class="sr-only" [checked]="useMockData" (change)="toggleMockData()">
+            <div class="w-10 h-6 rounded-full transition-colors"
+                 [ngClass]="useMockData ? 'bg-blue-500' : 'bg-muted-foreground/30'">
+            </div>
+            <div class="absolute top-1 left-1 w-4 h-4 bg-white rounded-full shadow transition-transform"
+                 [ngClass]="useMockData ? 'translate-x-4' : 'translate-x-0'">
+            </div>
           </div>
-          <div class="absolute top-1 left-1 w-4 h-4 bg-white rounded-full shadow transition-transform"
-               [ngClass]="showOpenOnly ? 'translate-x-4' : 'translate-x-0'">
+        </label>
+
+        <!-- Prikaži samo otvorene -->
+        <label class="flex items-center gap-2 cursor-pointer select-none">
+          <span class="text-sm text-muted-foreground">Prikaži samo otvorene</span>
+          <div class="relative">
+            <input type="checkbox" class="sr-only" [(ngModel)]="showOpenOnly">
+            <div class="w-10 h-6 rounded-full transition-colors"
+                 [ngClass]="showOpenOnly ? 'bg-green-500' : 'bg-muted-foreground/30'">
+            </div>
+            <div class="absolute top-1 left-1 w-4 h-4 bg-white rounded-full shadow transition-transform"
+                 [ngClass]="showOpenOnly ? 'translate-x-4' : 'translate-x-0'">
+            </div>
           </div>
-        </div>
-      </label>
+        </label>
+      </div>
     </div>
 
     <div class="bg-card rounded-lg shadow overflow-hidden">
-      <table class="w-full">
+      <table class="w-full" *ngIf="exchanges.length > 0 && !loadError">
         <thead class="bg-muted border-b border-border">
           <tr>
             <th class="px-6 py-3 text-left text-sm font-semibold text-foreground">Naziv Berze</th>
@@ -52,6 +69,11 @@
           </tr>
         </tbody>
       </table>
+
+      <!-- Poruka ako nema podataka ili je došlo do greške -->
+      <div class="px-6 py-12 text-center" *ngIf="exchanges.length === 0 || loadError">
+        <p class="text-lg text-muted-foreground">{{ loadError ? 'Greška pri učitavanju podataka' : 'Nema podataka' }}</p>
+      </div>
     </div>
   </div>
 </div>
