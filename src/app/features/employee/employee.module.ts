@@ -3,18 +3,17 @@ import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
 
-
 import { EmployeeListComponent } from './components/employee-list/employee-list.component';
 import { EmployeeCreateComponent } from './components/employee-create/employee-create.component';
 import { EmployeeEditComponent } from './components/employee-edit/employee-edit.component';
 import { ExchangeListComponent } from './components/exchange-list/exchange-list.component';
-
 import { ActuaryManagementComponent } from './components/actuary-management/actuary-management.component';
 import { AccountManagementComponent } from './account-management/account-management.component';
 import { AccountCardsPlaceholderComponent } from './account-cards-placeholder/account-cards-placeholder.component';
 import { LoanRequestManagementComponent } from './components/loan-request-management/loan-request-management.component';
 import { LoanManagementComponent } from './components/loan-management/loan-management.component';
 import { NavbarComponent } from 'src/app/shared/components/navbar/navbar.component';
+import { OrdersOverviewComponent } from './components/orders-overview/orders-overview.component';
 
 @NgModule({
   declarations: [
@@ -24,7 +23,8 @@ import { NavbarComponent } from 'src/app/shared/components/navbar/navbar.compone
     ActuaryManagementComponent,
     AccountCardsPlaceholderComponent,
     LoanRequestManagementComponent,
-    LoanManagementComponent
+    LoanManagementComponent,
+    OrdersOverviewComponent,
   ],
   imports: [
     CommonModule,
@@ -33,7 +33,7 @@ import { NavbarComponent } from 'src/app/shared/components/navbar/navbar.compone
     RouterModule,
     AccountManagementComponent,
     ExchangeListComponent,
-    NavbarComponent
-  ]
+    NavbarComponent,
+  ],
 })
 export class EmployeeModule {}
