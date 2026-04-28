@@ -10,13 +10,13 @@
 
   <div class="filters-card">
     <button
-      *ngFor="let filter of filters"
+      *ngFor="let opt of filterOptions"
       type="button"
       class="filter-btn"
-      [class.active]="selectedFilter === filter"
-      (click)="setFilter(filter)"
+      [class.active]="selectedFilter === opt.value"
+      (click)="setFilter(opt.value)"
     >
-      {{ filter }}
+      {{ opt.label }}
     </button>
   </div>
 
@@ -60,7 +60,7 @@
             <td>{{ order.remainingPortions }}</td>
             <td>
               <span class="status" [ngClass]="order.status.toLowerCase()">
-                {{ order.status }}
+                {{ statusLabel(order.status) }}
               </span>
             </td>
             <td class="actions">
@@ -86,9 +86,10 @@
                 *ngIf="canCancel(order)"
                 type="button"
                 class="action-btn cancel"
-                (click)="cancelOrder(order)"
+                data-cy="cancel-order-btn"
+                (click)="openCancelDialog(order)"
               >
-                Otkaži
+                Cancel
               </button>
 
               <span
@@ -109,6 +110,86 @@
           </tr>
         </tbody>
       </table>
+
+      <div
+        *ngIf="!isLoading && totalElements > 0"
+        class="pagination-bar"
+        role="navigation"
+        aria-label="Order list pagination"
+      >
+        <span class="pagination-info">
+          Showing
+          {{ currentPage * pageSize + 1 }}–{{
+            (currentPage + 1) * pageSize > totalElements
+              ? totalElements
+              : (currentPage + 1) * pageSize
+          }}
+          of {{ totalElements }}
+        </span>
+        <div class="pagination-actions">
+          <button
+            type="button"
+            class="pagination-btn"
+            [disabled]="currentPage <= 0"
+            (click)="goToPage(currentPage - 1)"
+          >
+            Previous
+          </button>
+          <span class="pagination-page"
+            >Page {{ currentPage + 1 }} / {{ totalPages || 1 }}</span
+          >
+          <button
+            type="button"
+            class="pagination-btn"
+            [disabled]="totalPages <= 0 || currentPage >= totalPages - 1"
+            (click)="goToPage(currentPage + 1)"
+          >
+            Next
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div
+  *ngIf="cancelTarget"
+  class="cancel-dialog-overlay"
+  role="presentation"
+  (click)="closeCancelDialog()"
+>
+  <div
+    class="cancel-dialog"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="cancel-dialog-title"
+    (click)="$event.stopPropagation()"
+  >
+    <h2 id="cancel-dialog-title" class="cancel-dialog-title">Cancel order</h2>
+    <p class="cancel-dialog-text">
+      Remaining portions: <strong>{{ cancelTarget.remainingPortions }}</strong>.
+      Leave empty to cancel the entire remaining amount, or enter how many
+      portions to cancel.
+    </p>
+    <label class="cancel-dialog-label" for="cancel-qty-input"
+      >Portions to cancel (optional)</label
+    >
+    <input
+      id="cancel-qty-input"
+      type="number"
+      class="cancel-dialog-input"
+      min="1"
+      [max]="cancelTarget.remainingPortions"
+      [(ngModel)]="cancelQuantityInput"
+      [attr.placeholder]="'1 – ' + cancelTarget.remainingPortions"
+    />
+    <div class="cancel-dialog-actions">
+      <button type="button" class="btn-secondary" (click)="closeCancelDialog()">
+        Close
+      </button>
+      <button type="button" class="btn-primary" (click)="confirmCancel()">
+        Confirm cancel
+      </button>
     </div>
   </div>
 </div>

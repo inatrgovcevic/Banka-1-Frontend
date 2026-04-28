@@ -2,46 +2,69 @@
 // E2E testovi za Orders Overview komponentu
 
 describe('Orders Overview Component', () => {
-  const setSupervisorUser = () => {
-    window.localStorage.setItem('authToken', 'fake-jwt-token');
-    window.localStorage.setItem(
-      'loggedUser',
-      JSON.stringify({
-        email: 'supervisor@test.com',
-        role: 'Supervisor',
-        permissions: [],
-      }),
-    );
+  const visitOrdersOverviewAs = (user: {
+    email: string;
+    role: string;
+    permissions: string[];
+  }) => {
+    cy.visit('/orders-overview', {
+      onBeforeLoad: (win) => {
+        win.localStorage.clear();
+        win.localStorage.setItem('authToken', 'fake-jwt-token');
+        win.localStorage.setItem('loggedUser', JSON.stringify(user));
+      },
+    });
   };
 
   it('ne treba da dozvoli pristup bez ulogovanog korisnika', () => {
-    window.localStorage.clear();
-
-    cy.visit('/orders-overview');
+    cy.visit('/orders-overview', {
+      onBeforeLoad: (win) => {
+        win.localStorage.clear();
+      },
+    });
 
     cy.url().should('include', '/login');
   });
 
   it('ne treba da dozvoli pristup korisniku bez supervisor permisije', () => {
-    window.localStorage.setItem('authToken', 'fake-jwt-token');
-    window.localStorage.setItem(
-      'loggedUser',
-      JSON.stringify({
-        email: 'agent@test.com',
-        role: 'Agent',
-        permissions: [],
-      }),
-    );
+    visitOrdersOverviewAs({
+      email: 'agent@test.com',
+      role: 'Agent',
+      permissions: [],
+    });
 
-    cy.visit('/orders-overview');
+    cy.url().should('include', '/403');
+  });
+
+  it('ne treba da dozvoli pristup Adminu (samo supervizor na ovom portalu)', () => {
+    visitOrdersOverviewAs({
+      email: 'admin@test.com',
+      role: 'Admin',
+      permissions: ['FUND_AGENT_MANAGE'],
+    });
 
     cy.url().should('include', '/403');
   });
 
   describe('kada je korisnik Supervisor', () => {
     beforeEach(() => {
-      setSupervisorUser();
-      cy.visit('/orders-overview');
+      cy.intercept('GET', /\/orders(\?.*)?$/, {
+        statusCode: 200,
+        body: {
+          content: [],
+          totalElements: 0,
+          totalPages: 0,
+          number: 0,
+          size: 10,
+        },
+      }).as('getOrders');
+
+      visitOrdersOverviewAs({
+        email: 'supervisor@test.com',
+        role: 'Supervisor',
+        permissions: [],
+      });
+      cy.wait('@getOrders');
     });
 
     it('treba da prikaže Orders Overview stranicu', () => {
@@ -52,17 +75,18 @@ describe('Orders Overview Component', () => {
     });
 
     it('treba da prikaže filtere za statuse ordera', () => {
-      cy.contains('button', 'ALL').should('be.visible');
-      cy.contains('button', 'PENDING').should('be.visible');
-      cy.contains('button', 'APPROVED').should('be.visible');
-      cy.contains('button', 'DECLINED').should('be.visible');
-      cy.contains('button', 'DONE').should('be.visible');
+      cy.contains('button', 'All').should('be.visible');
+      cy.contains('button', 'Pending').should('be.visible');
+      cy.contains('button', 'Approved').should('be.visible');
+      cy.contains('button', 'Declined').should('be.visible');
+      cy.contains('button', 'Done').should('be.visible');
     });
 
     it('treba da označi izabrani filter kao aktivan', () => {
-      cy.contains('button', 'PENDING').click();
+      cy.contains('button', 'Pending').click();
+      cy.wait('@getOrders');
 
-      cy.contains('button', 'PENDING').should('have.class', 'active');
+      cy.contains('button', 'Pending').should('have.class', 'active');
     });
 
     it('treba da prikaže kolone tabele', () => {
@@ -83,16 +107,18 @@ describe('Orders Overview Component', () => {
     });
 
     it('ne treba da prikaže akcione dugmiće kada nema ordera', () => {
-      cy.contains('button', 'Approve').should('not.exist');
-      cy.contains('button', 'Decline').should('not.exist');
-      cy.contains('button', 'Otkaži').should('not.exist');
+      // Tačan tekst — inače bi 'Approved'/'Declined' filter dugmad poklopila podstring 'Approve'/'Decline'.
+      cy.contains('button', /^Approve$/).should('not.exist');
+      cy.contains('button', /^Decline$/).should('not.exist');
+      cy.contains('button', /^Cancel$/).should('not.exist');
     });
 
     it('treba da ostane na stranici nakon promene filtera bez ordera', () => {
-      cy.contains('button', 'DONE').click();
+      cy.contains('button', 'Done').click();
+      cy.wait('@getOrders');
 
       cy.contains('Orders Overview').should('be.visible');
-      cy.contains('button', 'DONE').should('have.class', 'active');
+      cy.contains('button', 'Done').should('have.class', 'active');
       cy.contains('No orders found for selected filter.').should('be.visible');
     });
   });

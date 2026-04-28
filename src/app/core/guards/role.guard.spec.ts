@@ -101,4 +101,46 @@ describe('roleGuard', () => {
 
     expect(result).toBeTrue();
   });
+
+  it('should redirect to /403 if allowedRoles is set and user role does not match', () => {
+    const navigateSpy = spyOn(router, 'navigate');
+    localStorage.setItem('loggedUser', JSON.stringify({
+      email: 'admin@test.com',
+      role: 'Admin',
+      permissions: ['FUND_AGENT_MANAGE'],
+    }));
+
+    const route = {} as ActivatedRouteSnapshot;
+    (route as any).data = {
+      permission: 'FUND_AGENT_MANAGE',
+      allowedRoles: ['Supervisor'],
+    };
+
+    const result = TestBed.runInInjectionContext(() =>
+      roleGuard(route, dummyState)
+    );
+
+    expect(result).toBeFalse();
+    expect(navigateSpy).toHaveBeenCalledWith(['/403']);
+  });
+
+  it('should allow when allowedRoles includes user role', () => {
+    localStorage.setItem('loggedUser', JSON.stringify({
+      email: 'sup@test.com',
+      role: 'Supervisor',
+      permissions: ['FUND_AGENT_MANAGE'],
+    }));
+
+    const route = {} as ActivatedRouteSnapshot;
+    (route as any).data = {
+      permission: 'FUND_AGENT_MANAGE',
+      allowedRoles: ['Supervisor'],
+    };
+
+    const result = TestBed.runInInjectionContext(() =>
+      roleGuard(route, dummyState)
+    );
+
+    expect(result).toBeTrue();
+  });
 });

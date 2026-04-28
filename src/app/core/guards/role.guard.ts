@@ -67,5 +67,17 @@ export const roleGuard: CanActivateFn = (route: ActivatedRouteSnapshot) => {
     return false;
   }
 
+  const allowedRoles = route.data['allowedRoles'] as string[] | undefined;
+  if (allowedRoles?.length) {
+    const roleNorm = (parsedUser.role ?? '').trim().toLowerCase();
+    const ok = allowedRoles.some(
+      (r) => r.trim().toLowerCase() === roleNorm,
+    );
+    if (!ok) {
+      router.navigate(['/403']);
+      return false;
+    }
+  }
+
   return true;
 };
